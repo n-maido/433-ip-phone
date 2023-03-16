@@ -11,14 +11,15 @@
 <form>
 	<h1>433 IP Phone</h1>	
 	<div id="content">
+
 		<div id="call-box">
-			<h3>Calling</h3>
-			<button>Hang up</button>
+			<h3 id="call-box-text">Calling</h3>
+			<input type="button" id="hangUpBtn" value="Hang Up">
 		</div>
 
 		<p>
 			<h2>Make a call</h2>
-			<input type="text" id="sipInput" value="Enter a SIP address">
+			<input type="text" id="sipInput" placeholder="Enter a SIP address">
 			<input type="button" id="callBtn" value="Call">
 		</p>
 		

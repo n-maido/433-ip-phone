@@ -19,9 +19,6 @@ exports.listen = function(server) {
 };
 
 function handleCommand(socket) {
-	socket.on('alive', function() {
-		socket.emit('server is alive');
-	})
 	// Passed string of command to relay
 	socket.on('udpCommand', function(data) {
 		console.log('udpCommand command: ' + data);
@@ -59,6 +56,12 @@ function handleCommand(socket) {
 			switch(reply.msgType) {
 				case "heartbeat":
 					socket.emit('heartbeat', reply.content);
+					break;
+				case "make_call":
+					socket.emit('make_call', reply.content);
+					break;
+				case "hang_up":
+					socket.emit('hang_up', reply.content);
 					break;
 			}
 			client.close();

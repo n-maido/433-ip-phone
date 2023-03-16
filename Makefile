@@ -29,6 +29,6 @@ clean:
 
 # Copy the nodeJS server to the public directory.
 node:
-	mkdir -p $(PUBDIR)/ip_phone_node_server_copy/ 
-	cp -R node-server/* $(PUBDIR)/ip_phone_node_server_copy/ 
-	cd $(PUBDIR)/ip_phone_node_server_copy/ && npm install
+	mkdir -p $(PUBDIR)/ip_phone_node_copy/ 
+	cp -R node-server/* $(PUBDIR)/ip_phone_node_copy/ 
+	cd $(PUBDIR)/ip_phone_node_copy/ && npm install
