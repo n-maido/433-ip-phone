@@ -8,12 +8,11 @@
 var mySipAddress = "sip:address" //Later, remove?
 
 /**
- * Called every second
  * Maybe: get the call statistics?
  */
-function heartbeat_info(){
-	sendCommandViaUDP("get_info");
-	socket.on('heartbeat', (result) => {
+function call_stats(){
+	sendCommandViaUDP("call_stats");
+	socket.on('call_stats', (result) => {
 	
 	})
 };
@@ -41,11 +40,11 @@ $(document).ready(function() {
 		// remove if not needed
 		var callee = $('#sipInput').val();
 
-		sendCommandViaUDP(`{\"cmd\": \"hang_up\", \"caller\": \"${mySipAddress}\", \"callee\": \"${callee}\" }`);
+		sendCommandViaUDP(`{\"cmd\": \"end_call\", \"caller\": \"${mySipAddress}\", \"callee\": \"${callee}\" }`);
 
 		hideCallBox();
 
-		socket.on('hang_up', function(result) {
+		socket.on('end_call', function(result) {
 			console.log(result);
 		});
 	});

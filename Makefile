@@ -3,7 +3,7 @@
 
 # Edit this file to compile extra C files into their own programs.
 TARGET= ip_phone
-SOURCES= main.c 
+SOURCES= main.c udp_server/udp_server.c
 
 PUBDIR = $(HOME)/cmpt433/public/myApps
 OUTDIR = $(PUBDIR)
@@ -30,5 +30,5 @@ clean:
 # Copy the nodeJS server to the public directory.
 node:
 	mkdir -p $(PUBDIR)/ip_phone_node_copy/ 
-	cp -R node-server/* $(PUBDIR)/ip_phone_node_copy/ 
+	cp -R node_server/* $(PUBDIR)/ip_phone_node_copy/ 
 	cd $(PUBDIR)/ip_phone_node_copy/ && npm install

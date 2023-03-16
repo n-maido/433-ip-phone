@@ -53,15 +53,16 @@ function handleCommand(socket) {
 			console.log("UDP Client: message Rx" + remote.address + ':' + remote.port +' - ' + message);
 
 			var reply = JSON.parse(message.toString('utf8'));
+			
 			switch(reply.msgType) {
-				case "heartbeat":
-					socket.emit('heartbeat', reply.content);
+				case "call_stats":
+					socket.emit('call_stats', reply.content);
 					break;
 				case "make_call":
 					socket.emit('make_call', reply.content);
 					break;
-				case "hang_up":
-					socket.emit('hang_up', reply.content);
+				case "end_call":
+					socket.emit('end_call', reply.content);
 					break;
 			}
 			client.close();
