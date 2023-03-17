@@ -8,29 +8,53 @@
 </head>
 
 <body>
-<form>
-	<h1>433 IP Phone</h1>	
-	<div id="content">
-
-		<div id="call-box">
-			<h3 id="call-box-text">Calling</h3>
-			<input type="button" id="hangUpBtn" value="Hang Up">
-		</div>
-
-		<p>
-			<h2>Make a call</h2>
-			<input type="text" id="sipInput" placeholder="Enter a SIP address">
-			<input type="button" id="callBtn" value="Call">
-		</p>
-		
-		<div id="control">
-			<p>
-				<input type="button" id="stop" value="Terminate Program">
-			</p>
-		</div>
+	<h1>433 IP Phone</h1>
+	<div id="call-box">
+		<h3 id="call-box-text">Calling</h3>
+		<input type="button" id="hangUpBtn" value="Hang Up">
 	</div>
-</form>
-	
+
+	<div id="make-call">
+		<form>
+			<p>
+				<h2>Make a call</h2>
+				<input type="text" id="sipInput" placeholder="Enter a SIP address">
+				<input type="button" id="callBtn" value="Call">
+			</p>
+			
+			<div id="control">
+				<p>
+					<input type="button" id="stop" value="Terminate Program">
+				</p>
+			</div>
+		</form>
+	</div>
+
+	<div id="saved-contacts">
+		<h2>Saved Contacts</h2>
+		<form>
+			<table id="contactsTable">
+				<!--Table headings-->
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>SIP Address</th>
+						<th></th>
+					</tr>
+				</thead>
+				
+				<!--Contacts-->
+				<tbody id="contactsTableBody">
+
+				</tbody>
+			</table>
+			<!--Add contact-->
+			<!-- <div id="add-contact">
+				<input id="addBtn" type="button" value="Add contact">
+			</div> -->
+		</form>
+
+	</div>
 	<script src="/socket.io/socket.io.js" type="text/javascript"></script>
 	<script src="http://code.jquery.com/jquery-1.11.1.min.js" type="text/javascript"></script>
 	<script src="javascripts/ip_phone_ui.js" type="text/javascript"></script>

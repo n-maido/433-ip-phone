@@ -81,7 +81,7 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         char calleeAddress[MAX_SIP_ADDRESS_SIZE] = "";
         parseSip(msg, MAKE_CALL, calleeAddress);
 
-        printf("callee address = %s\n", calleeAddress);
+        printf("starting call with address %s\n", calleeAddress);
 
         // TODO: check if valid sip address?
         bool validAdress = true; // placeholder, remove later
@@ -100,7 +100,7 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         char calleeAddress[MAX_SIP_ADDRESS_SIZE] = "";
         parseSip(msg, END_CALL, calleeAddress);
 
-        printf("callee address = %s\n", calleeAddress);
+        printf("ending call with address %s\n", calleeAddress);
 
         // TODO: check if valid sip address?
         bool validAdress = true; // placeholder, remove later
