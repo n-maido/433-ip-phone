@@ -1,0 +1,49 @@
+:root {
+	--form-bg: #e6ecef;
+	--table-header: #d8d8d8;
+	--table-outline: #b3b3b3;
+}
+
+body {
+	width: 800px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+h1, h2 {
+	margin-bottom: 1px;
+	padding-bottom: 1px;
+}
+
+#make-call {
+	margin-top: 10pt;
+}
+
+
+#call-box {
+	border: thin black solid;
+	clear: both;
+	padding-left: 10pt;
+	padding-right: 10pt;
+	min-height: 100pt;
+	margin-top: 20px;
+	display: none;
+	background-color: var(--form-bg);
+}
+
+table {
+	border-left: solid 1px black;
+	border-bottom: solid 1px black;
+	border-spacing: 0;
+}
+  
+td,
+th {
+font-family: "Times New Roman", Times, serif;
+border-top: solid 1px black;
+border-right: solid 1px black;
+border-collapse: collapse;
+padding: 5px;
+text-align: left;
+width: 10em;
+}
