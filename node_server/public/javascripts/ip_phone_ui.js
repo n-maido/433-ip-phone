@@ -25,7 +25,7 @@ $(document).ready(function() {
 	$('#callBtn').click(function(){
 		var callee = $('#sipInput').val();
 
-		sendCommandViaUDP(`{\"cmd\": \"make_call\", \"caller\": \"${mySipAddress}\", \"callee\": \"${callee}\" }`);
+		sendCommandViaUDP(`make_call=${callee}`);
 
 		showCallBox(callee);
 
@@ -40,7 +40,7 @@ $(document).ready(function() {
 		// remove if not needed
 		var callee = $('#sipInput').val();
 
-		sendCommandViaUDP(`{\"cmd\": \"end_call\", \"caller\": \"${mySipAddress}\", \"callee\": \"${callee}\" }`);
+		sendCommandViaUDP(`end_call=${callee}`);
 
 		hideCallBox();
 

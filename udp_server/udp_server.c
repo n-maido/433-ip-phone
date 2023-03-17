@@ -11,12 +11,12 @@
 
 #include "udp_server.h"
 
-
 #define PORT 11037
 //predefined length in assignment spec for UDP packet
-#define MSG_LEN 20
+#define MSG_LEN 100
 #define MAX_COMMAND_LENGTH 8
-
+#define MAX_REPLY_SIZE 150
+#define MAX_SIP_ADDRESS_SIZE 50
 
 static pthread_t udpThreadPID = -1;
 static struct sockaddr_in beagle_sin = {0};
@@ -27,15 +27,15 @@ static bool waitForMessages = false;
 static pthread_cond_t * shutdownRequest = NULL;
 static pthread_mutex_t * shutdownLock = NULL;
 
-enum UDP_OPTIONS{
+typedef enum {
     GET_CALL_STATS = 0,
     MAKE_CALL,
     END_CALL,
     STOP,
     OPTIONS_MAX_COUNT
-};
+} UDP_OPTIONS;
 
-const char optionValues[OPTIONS_MAX_COUNT][24] = {"get_call_stats", "make_call", "end_call", "stop"};
+const char optionValues[OPTIONS_MAX_COUNT][24] = {"get_call_stats", "make_call=", "end_call=", "stop"};
 
 static inline void toLowerString(char * s){
     for(int i = 0; i < strlen(s); ++i){
@@ -47,6 +47,18 @@ static void sendShutdownRequest(void){
     pthread_mutex_lock(shutdownLock);
     pthread_cond_signal(shutdownRequest);
     pthread_mutex_unlock(shutdownLock);
+}
+
+/**
+ * Given a msg of the format "cmd=<sip address>", extracts the sip address 
+ * and copies to a provided string
+ * Called by the make_call and end_call cmds
+*/
+static void parseSip(char* msg, UDP_OPTIONS option, char sipAddress[MAX_SIP_ADDRESS_SIZE]) {
+    memset(sipAddress, 0, MAX_SIP_ADDRESS_SIZE);
+    int startIndex = strlen(optionValues[option]);
+    int endIndex = strlen(msg) - startIndex;
+    strncpy(sipAddress, msg + startIndex, endIndex);
 }
 
 /** 
@@ -62,27 +74,54 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
     if(!strncmp(msg, optionValues[GET_CALL_STATS], strlen(optionValues[GET_CALL_STATS]))){
         snprintf(r, 100, "{\"msgType\":\"call_stats\",\"content\":{}}\n");
         return;
-    }else if(!strncmp(msg, optionValues[MAKE_CALL], strlen(optionValues[MAKE_CALL]))){
-        // TODO: parse sip address
+    } else if(!strncmp(msg, optionValues[MAKE_CALL], strlen(optionValues[MAKE_CALL]))){
+        // expects a msg of the format "make_call=<sip address>"
 
-        // check if valid sip address?
+        // parse sip address
+        char calleeAddress[MAX_SIP_ADDRESS_SIZE] = "";
+        parseSip(msg, MAKE_CALL, calleeAddress);
+
+        printf("callee address = %s\n", calleeAddress);
+
+        // TODO: check if valid sip address?
         bool validAdress = true; // placeholder, remove later
         if (!validAdress){
             strncpy(r, "{\"msgType\":\"make_call\", \"content\": \"Error: Invalid SIP address.\"}\n", 100);
             return;
         }else{
-            // start call
-            strncpy(r, "{\"msgType\":\"make_call\", \"content\": \"Success: Call starting\"}\n", 100);
+            // TODO: start call
+            snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"make_call\", \"content\": \"Success: Starting call to %s\"}\n", calleeAddress);
         }
     } else if (!strncmp(msg, optionValues[END_CALL], strlen(optionValues[END_CALL]))){
+        // expects a msg of the format "end_call=<sip address>"
+        // if we don't need an address to end a call, then delete this section
+
+        // parse sip address
+        char calleeAddress[MAX_SIP_ADDRESS_SIZE] = "";
+        parseSip(msg, END_CALL, calleeAddress);
+
+        printf("callee address = %s\n", calleeAddress);
+
+        // TODO: check if valid sip address?
+        bool validAdress = true; // placeholder, remove later
+        if (!validAdress){
+            strncpy(r, "{\"msgType\":\"end_call\", \"content\": \"Error: Invalid SIP address.\"}\n", 100);
+            return;
+        }else{
+            // TODO: end call
+            snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"end_call\", \"content\": \"Success: Ending call with %s\"}\n", calleeAddress);
+        }
        
+    } else if (!strncmp(msg, optionValues[STOP], strlen(optionValues[STOP]))){
+        strncpy(r, "{\"msgType\":\"stop\", \"content\": \"Stopping program.\"}\n", 100);
+        return;
     } else {
         strncpy(r, "{\"msgType\":\"invalid\", \"content\":\"Error: Invalid command.\"}\n", 100);
         return;
     } 
 }
 
-#define MAX_REPLY_SIZE 100
+
 //constantly wait for messages on the given port. 
 //returns -1 on failure, and will send out a shutdown request if it fails / receives a quit request.
 static int udp_receive_thread(void){
@@ -153,6 +192,7 @@ int udp_init(pthread_cond_t * cond, pthread_mutex_t * lock){
         sendShutdownRequest();
         return -1;
     }
+
     return 1;
 }
 
