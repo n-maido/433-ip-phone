@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 
+#include "utils/utils.h"
 #include "udp_server/udp_server.h"
 
 static pthread_cond_t shutdownCondition = PTHREAD_COND_INITIALIZER;

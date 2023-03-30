@@ -3,7 +3,8 @@
 	"version": "0.0.1",
 	"description": "Relays udp messages from the website to the udp server",
 	"dependencies": {
+		"mime": "~1.2.7",
 		"socket.io": "~0.9.6",
-		"mime": "~1.2.7"
+		"toastify-js": "^1.12.0"
 	}
 }

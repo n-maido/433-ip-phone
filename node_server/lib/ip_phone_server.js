@@ -16,7 +16,7 @@ exports.listen = function(server) {
 	io.sockets.on('connection', function(socket) {
 		handleCommand(socket);
 	});
-};
+}; 
 
 function handleCommand(socket) {
 	// Passed string of command to relay
@@ -55,8 +55,15 @@ function handleCommand(socket) {
 			var reply = JSON.parse(message.toString('utf8'));
 			
 			switch(reply.msgType) {
-				case "call_stats":
-					socket.emit('call_stats', reply.content);
+				case "new_user":
+					socket.emit('new_user', reply.content);
+					break;
+				case "call_status":
+					socket.emit('call_status', reply.content);
+					break;
+				case "call_started":
+					console.log("received call_starting. emitting to socket");
+					socket.emit('call_started', reply.content.address);
 					break;
 				case "make_call":
 					socket.emit('make_call', reply.content);

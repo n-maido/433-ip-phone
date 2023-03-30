@@ -18,6 +18,11 @@
 //Set up UDP socket and thread. Returns -1 upon failure.
 int udp_init(pthread_cond_t * cond, pthread_mutex_t * lock);
 int send_info_message(void);
+
+// Notifies the udp module that a call is in progress
+// Forwards the notification to the web interface
+void udp_notifyCallStarted(char* calleeAddress);
+
 //Cleanup. Returns -1 if there were any issues closing.
 int udp_cleanup(void);
 

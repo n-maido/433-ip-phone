@@ -6,6 +6,7 @@
  */
 
 var callInProgress = false;
+var username = "user";
 var mySipAddress = "sip:address"; //Later, remove?
 
 var savedContacts = [{
@@ -18,10 +19,39 @@ var savedContacts = [{
 	}
 ];
 
+var successToast = Toastify({
+	text: "Success",
+	duration: 1500,
+	newWindow: false,
+	close: true,
+	gravity: "top", // `top` or `bottom`
+	position: "center", // `left`, `center` or `right`
+	stopOnFocus: true, // Prevents dismissing of toast on hover
+	style: {
+	  background: "#2ecc71",
+	  fontFamily: "sans-serif"
+	},
+});
+
+var errorToast = Toastify({
+	text: "Error",
+	duration: 1500,
+	newWindow: false,
+	close: true,
+	gravity: "top", // `top` or `bottom`
+	position: "center", // `left`, `center` or `right`
+	stopOnFocus: true, // Prevents dismissing of toast on hover
+	style: {
+	  background: "#e74c3c",
+	  fontFamily: "sans-serif"
+	},
+});
+
 /**
- * Maybe: get the call statistics?
+ * Get the call status
+ * Called every 500ms
  */
-function call_stats(){
+function call_status(){
 	sendCommandViaUDP("call_stats");
 	socket.on('call_stats', (result) => {
 	
@@ -32,6 +62,9 @@ function call_stats(){
 var socket = io.connect();
 
 $(document).ready(function() {
+	// show the onboarding prompt
+	onboardUser();
+
 	// populate saved contacts table
 	loadContacts();
 
@@ -76,6 +109,7 @@ $(document).ready(function() {
 	});
 });
 
+
 function sendCommandViaUDP(message) {
 	socket.emit('udpCommand', message);
 };
@@ -111,6 +145,22 @@ function showCallBox(callee) {
 function hideCallBox() {
 	$('#call-box-text').text('');
 	$('#call-box').hide();
+}
+
+function onboardUser() {
+	username = window.prompt("Welcome to the 433 IP Phone! \nPlease enter a username:");
+	sendCommandViaUDP(`new_user=${username}`);
+	socket.on('new_user', function(result) {
+		if (result.toLowerCase() === 'success') {
+			successToast.options.text = "Successfully joined the network";
+			successToast.showToast();
+			successToast.options.text = "Success"
+		} else {
+			errorToast.options.text = "Error joining network"
+			errorToast.showToast();
+			errorToast.options.text = "Error"
+		}
+	});
 }
 
 function loadContacts() {
