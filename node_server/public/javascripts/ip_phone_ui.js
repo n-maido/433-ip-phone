@@ -165,8 +165,6 @@ function onboardUser() {
 }
 
 function loadContacts() {
-	let count = 0;
-
 	// load from json file
 	$.getJSON("data/contacts.json", function(data){
 		console.log(data); 
@@ -181,7 +179,14 @@ function loadContacts() {
 			</tr>`
 	
 			$('#contactsTable tr:last').after(tableRow);
-			count++;
+
+			sendCommandViaUDP(`add_contact=${contact.name}&${contact.sipAddress}`);
+
+			socket.on('add_contact', function(result) {
+				if (result.toLowerCase() !== 'success') {
+					console.log(result);
+				}
+			});
 		});
 	}).fail(function(){
 		console.log("Error loading saved contacts.");

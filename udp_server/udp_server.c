@@ -30,13 +30,14 @@ static pthread_mutex_t * shutdownLock = NULL;
 typedef enum {
     GET_CALL_STATS = 0,
     NEW_USER,
+    ADD_CONTACT,
     MAKE_CALL,
     END_CALL,
     STOP,
     OPTIONS_MAX_COUNT
 } UDP_OPTIONS;
 
-const char optionValues[OPTIONS_MAX_COUNT][24] = {"get_call_stats", "new_user=", "make_call=", "end_call=", "stop"};
+const char optionValues[OPTIONS_MAX_COUNT][24] = {"get_call_stats", "new_user=", "add_contact=", "make_call=", "end_call=", "stop"};
 
 static inline void toLowerString(char * s){
     for(int i = 0; i < strlen(s); ++i){
@@ -86,6 +87,20 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
 
         //TODO: return their sip address?
         strncpy(r, "{\"msgType\":\"new_user\", \"content\": \"Success\"}\n", 100);        
+    } else if(!strncmp(msg, optionValues[ADD_CONTACT], strlen(optionValues[ADD_CONTACT]))){
+        // expects a msg of the format "add_contact=<name>&<sipAddress>"
+        // parse contact
+        char contact[MAX_SIP_ADDRESS_SIZE] = "";
+        extractString(msg, ADD_CONTACT, contact);
+
+        char* name = strtok(contact, "&");
+        char* sipAddress = strtok(NULL, "&");
+
+        printf("new contact: %s, %s\n", name, sipAddress);
+
+        //TODO: return their sip address?
+        strncpy(r, "{\"msgType\":\"add_contact\", \"content\": \"Success\"}\n", 100);
+
     } else if(!strncmp(msg, optionValues[MAKE_CALL], strlen(optionValues[MAKE_CALL]))){
         // expects a msg of the format "make_call=<sip address>"
 
