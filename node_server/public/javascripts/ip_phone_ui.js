@@ -9,15 +9,16 @@ var callInProgress = false;
 var username = "user";
 var mySipAddress = "sip:address"; //Later, remove?
 
-var savedContacts = [{
-		name: "Nhi 1",
-		sipAddress: "sip:nhi@192.168.1.54"
-	},
-	{
-		name: "Nhi 2",
-		sipAddress: "sip:nhi@192.168.1.55"
-	}
-];
+// var savedContacts = [{
+// 		name: "Nhi 1",
+// 		sipAddress: "sip:nhi@192.168.1.54"
+// 	},
+// 	{
+// 		name: "Nhi 2",
+// 		sipAddress: "sip:nhi@192.168.1.55"
+// 	}
+// ];
+var savedContacts = [];
 
 var successToast = Toastify({
 	text: "Success",
@@ -105,7 +106,7 @@ $(document).ready(function() {
 
 	// Stop program
 	$('#stop').click(function(){
-		sendCommandViaUDP("stop");
+		shutdown();
 	});
 });
 
@@ -166,17 +167,32 @@ function onboardUser() {
 function loadContacts() {
 	let count = 0;
 
-	savedContacts.forEach((contact) => {
-		let tableRow = `<tr>
-			<td>${contact.name}</td>
-			<td>${contact.sipAddress}</td>
-			<td>
-				<input type="button" class="tableCallBtn" value="Call">
-			</td>
-		</tr>`
-
-		$('#contactsTable tr:last').after(tableRow);
-		count++;
+	// load from json file
+	$.getJSON("data/contacts.json", function(data){
+		console.log(data); 
+		data.forEach((contact) => {
+			savedContacts.push(contact);
+			let tableRow = `<tr>
+				<td>${contact.name}</td>
+				<td>${contact.sipAddress}</td>
+				<td>
+					<input type="button" class="tableCallBtn" value="Call">
+				</td>
+			</tr>`
+	
+			$('#contactsTable tr:last').after(tableRow);
+			count++;
+		});
+	}).fail(function(){
+		console.log("Error loading saved contacts.");
 	});
+}
 
+function shutdown() {
+	// save contacts to json file
+
+	// stop server
+	sendCommandViaUDP("stop");
+
+	// show status: app is unavailable
 }
