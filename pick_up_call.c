@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
     for (;;) {
         char option[10];
 
-        puts("Press 'h' to hangup all calls, 'q' to quit");
+        puts("Press 'h' to hangup all calls, 'q' to quit, c to call");
         if (fgets(option, sizeof(option), stdin) == NULL) {
             puts("EOF while reading stdin, will quit now..");
             break;
@@ -187,6 +187,14 @@ int main(int argc, char *argv[])
 
         if (option[0] == 'h')
             pjsua_call_hangup_all();
+        if (option[0]== 'c') {
+            
+            pj_str_t uri = pj_str("sip:san@192.168.26.128");
+            status = pjsua_call_make_call(acc_id, &uri, 0, NULL, NULL, NULL);
+            if (status != PJ_SUCCESS) error_exit("Error making call", status);
+            
+        }
+            //make call
     }
 
     /* Destroy pjsua */
