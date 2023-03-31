@@ -1,5 +1,5 @@
 /*
-    UDP header by Ryan Tio and Nhi Mai-Do, modified form assignment 3
+    Pjsua interface
     Usage / cautions:
         -pthread must be added to the compiler flags. 
 
@@ -10,20 +10,16 @@
             -There may be an unclosed thread. 
 */
 
-#ifndef udp_server
-#define udp_server
+#ifndef PJSUA_INTERFACE
+#define PJSUA_INTERFACE
 
 #include <pthread.h>
 
-//Set up UDP socket and thread. Returns -1 upon failure.
-int udp_init(pthread_cond_t * cond, pthread_mutex_t * lock);
-int send_info_message(void);
+//Set up pjsua and thread. Returns -1 upon failure.
+int pjsua_interface_init(pthread_cond_t * cond, pthread_mutex_t * lock);
 
-// Notifies the udp module that a call is in progress
-// Forwards the notification to the web interface
-void udp_notifyCallStarted(char* calleeAddress);
 
 //Cleanup. Returns -1 if there were any issues closing.
-int udp_cleanup(void);
+int pjsua_interface_cleanup(void);
 
 #endif

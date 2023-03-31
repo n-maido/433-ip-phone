@@ -29,13 +29,14 @@ static pthread_mutex_t * shutdownLock = NULL;
 
 typedef enum {
     GET_CALL_STATS = 0,
+    NEW_USER,
     MAKE_CALL,
     END_CALL,
     STOP,
     OPTIONS_MAX_COUNT
 } UDP_OPTIONS;
 
-const char optionValues[OPTIONS_MAX_COUNT][24] = {"get_call_stats", "make_call=", "end_call=", "stop"};
+const char optionValues[OPTIONS_MAX_COUNT][24] = {"get_call_stats", "new_user=", "make_call=", "end_call=", "stop"};
 
 static inline void toLowerString(char * s){
     for(int i = 0; i < strlen(s); ++i){
@@ -50,11 +51,12 @@ static void sendShutdownRequest(void){
 }
 
 /**
- * Given a msg of the format "cmd=<sip address>", extracts the sip address 
+ * Given a msg of the format "cmd=<string>", extracts the string 
  * and copies to a provided string
- * Called by the make_call and end_call cmds
+ * Called by the make_call and end_call cmds to extract the sip address
+ * Called by new_user to extract username
 */
-static void parseSip(char* msg, UDP_OPTIONS option, char sipAddress[MAX_SIP_ADDRESS_SIZE]) {
+static void extractString(char* msg, UDP_OPTIONS option, char sipAddress[MAX_SIP_ADDRESS_SIZE]) {
     memset(sipAddress, 0, MAX_SIP_ADDRESS_SIZE);
     int startIndex = strlen(optionValues[option]);
     int endIndex = strlen(msg) - startIndex;
@@ -74,16 +76,27 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
     if(!strncmp(msg, optionValues[GET_CALL_STATS], strlen(optionValues[GET_CALL_STATS]))){
         snprintf(r, 100, "{\"msgType\":\"call_stats\",\"content\":{}}\n");
         return;
+    } else if(!strncmp(msg, optionValues[NEW_USER], strlen(optionValues[NEW_USER]))){
+        // expects a msg of the format "new_user=<username>"
+        // parse username
+        char username[MAX_SIP_ADDRESS_SIZE] = "";
+        extractString(msg, NEW_USER, username);
+
+        printf("new user joined: %s\n", username);
+
+        //TODO: return their sip address?
+        strncpy(r, "{\"msgType\":\"new_user\", \"content\": \"Success\"}\n", 100);        
     } else if(!strncmp(msg, optionValues[MAKE_CALL], strlen(optionValues[MAKE_CALL]))){
         // expects a msg of the format "make_call=<sip address>"
 
         // parse sip address
         char calleeAddress[MAX_SIP_ADDRESS_SIZE] = "";
-        parseSip(msg, MAKE_CALL, calleeAddress);
+        extractString(msg, MAKE_CALL, calleeAddress);
 
         printf("starting call with address %s\n", calleeAddress);
 
-        // TODO: check if valid sip address?
+        // TODO: call Call module's calling func and process return val.
+        // if successful, notify the lcd module that a call is in progress
         bool validAdress = true; // placeholder, remove later
         if (!validAdress){
             strncpy(r, "{\"msgType\":\"make_call\", \"content\": \"Error: Invalid SIP address.\"}\n", 100);
@@ -98,9 +111,11 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
 
         // parse sip address
         char calleeAddress[MAX_SIP_ADDRESS_SIZE] = "";
-        parseSip(msg, END_CALL, calleeAddress);
+        extractString(msg, END_CALL, calleeAddress);
 
         printf("ending call with address %s\n", calleeAddress);
+        // TODO: call Call module's end call func and process return val.
+        // if successful, notify the lcd module that the call has ended
 
         // TODO: check if valid sip address?
         bool validAdress = true; // placeholder, remove later
@@ -124,6 +139,7 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
 
 //constantly wait for messages on the given port. 
 //returns -1 on failure, and will send out a shutdown request if it fails / receives a quit request.
+//can it shutdown 
 static int udp_receive_thread(void){
     printf("Listening on UDP port 11037.\n");
     while(waitForMessages){
