@@ -71,6 +71,9 @@ function handleCommand(socket) {
 				case "end_call":
 					socket.emit('end_call', reply.content);
 					break;
+				case "pick_up":
+					socket.emit('pick_up', reply.content);
+					break;
 			}
 			client.close();
 

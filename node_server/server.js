@@ -21,6 +21,9 @@ var server = http.createServer(function(request, response) {
 	
 	if (request.url == '/') {
 		filePath = 'public/index.html';
+	} else if (request.url == '/saveContact') {
+		saveContact(request, response);
+		return;
 	} else {
 		filePath = 'public' + request.url;
 	}
@@ -28,6 +31,7 @@ var server = http.createServer(function(request, response) {
 	var absPath = './' + filePath;
 	serveStatic(response, absPath);
 });
+
 
 server.listen(PORT_NUMBER, function() {
 	console.log("Server listening on port " + PORT_NUMBER);
@@ -61,6 +65,37 @@ function sendFile(response, filePath, fileContents) {
 			{"content-type": mime.lookup(path.basename(filePath))}
 		);
 	response.end(fileContents);
+}
+
+function saveContact(request, response) {
+	let contactsPath = './public/data/contacts.json';
+	request.on('data', function(data) { 
+		console.log("save endpt reached: " + data);
+		let contact = JSON.parse(data);
+
+		fs.readFile(contactsPath, function(err, data) {
+			if (err) {
+				console.log(err);
+				response.send(err);
+			} else {
+				console.log("read json file");
+				let contacts = JSON.parse(data);
+				contacts.push(contact);
+				console.log(contacts);
+
+				// TODO: file not saving
+				fs.writeFile(contactsPath, JSON.stringify(contacts), function(err){
+					if (err) {
+						console.log(err);
+						response.send(err);
+					} else {
+						console.log("wrote to json file");
+					}
+				});
+			}
+		});
+	});
+	response.end();
 }
 
 

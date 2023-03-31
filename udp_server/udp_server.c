@@ -28,16 +28,17 @@ static pthread_cond_t * shutdownRequest = NULL;
 static pthread_mutex_t * shutdownLock = NULL;
 
 typedef enum {
-    GET_CALL_STATS = 0,
+    CALL_STATUS = 0,
     NEW_USER,
     ADD_CONTACT,
     MAKE_CALL,
     END_CALL,
+    PICK_UP,
     STOP,
     OPTIONS_MAX_COUNT
 } UDP_OPTIONS;
 
-const char optionValues[OPTIONS_MAX_COUNT][24] = {"get_call_stats", "new_user=", "add_contact=", "make_call=", "end_call=", "stop"};
+const char optionValues[OPTIONS_MAX_COUNT][24] = {"call_status", "new_user=", "add_contact=", "make_call=", "end_call=", "pick_up=", "stop"};
 
 static inline void toLowerString(char * s){
     for(int i = 0; i < strlen(s); ++i){
@@ -74,8 +75,20 @@ static void extractString(char* msg, UDP_OPTIONS option, char sipAddress[MAX_SIP
 static void processReply(char * msg, const unsigned int msgLen, char * r){
     toLowerString(msg);
     //need to check if enter has been pressed.
-    if(!strncmp(msg, optionValues[GET_CALL_STATS], strlen(optionValues[GET_CALL_STATS]))){
-        snprintf(r, 100, "{\"msgType\":\"call_stats\",\"content\":{}}\n");
+    if(!strncmp(msg, optionValues[CALL_STATUS], strlen(optionValues[CALL_STATUS]))){
+        // TODO: get call status from Call module
+        int status = 0;
+        char* address = "sip@sip:123.123.12.1";
+        switch(status) {
+            case 0: //Incoming call
+                snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": \"incoming\", \"address\": \"%s\"}}\n", address);
+                break;
+            case 1: //Call in progress
+                snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": \"in_progress\", \"address\": \"%s\"}}\n", address);
+                break;
+
+        }
+        
         return;
     } else if(!strncmp(msg, optionValues[NEW_USER], strlen(optionValues[NEW_USER]))){
         // expects a msg of the format "new_user=<username>"
@@ -113,7 +126,6 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         printf("starting call with address %s\n", calleeAddress);
 
         // TODO: call Call module's calling func and process return val.
-        // if successful, notify the lcd module that a call is in progress
         bool validAdress = true; // placeholder, remove later
         if (!validAdress){
             strncpy(r, "{\"msgType\":\"make_call\", \"content\": \"Error: Invalid SIP address.\"}\n", 100);
@@ -132,7 +144,6 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
 
         printf("ending call with address %s\n", calleeAddress);
         // TODO: call Call module's end call func and process return val.
-        // if successful, notify the lcd module that the call has ended
 
         // TODO: check if valid sip address?
         bool validAdress = true; // placeholder, remove later
@@ -142,6 +153,25 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         }else{
             // TODO: end call
             snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"end_call\", \"content\": \"Success: Ending call with %s\"}\n", calleeAddress);
+        }
+       
+    } else if (!strncmp(msg, optionValues[PICK_UP], strlen(optionValues[PICK_UP]))){
+        // expects a msg of the format "pick_up=<sip address>"
+        // if we don't need an address to end a call, then delete this section
+
+        // parse sip address
+        char calleeAddress[MAX_SIP_ADDRESS_SIZE] = "";
+        extractString(msg, PICK_UP, calleeAddress);
+
+        printf("picking up call with address %s\n", calleeAddress);
+        // TODO: call Call module's pick upl func and process return val.
+
+        bool success = true; // placeholder, remove later
+        if (success){
+            strncpy(r, "{\"msgType\":\"pick_up\", \"content\": \"Success\"}\n", 100);
+            return;
+        }else{
+            snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"pick_up\", \"content\": \"Error\"}\n");
         }
        
     } else if (!strncmp(msg, optionValues[STOP], strlen(optionValues[STOP]))){

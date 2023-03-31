@@ -9,16 +9,14 @@ var callInProgress = false;
 var username = "user";
 var mySipAddress = "sip:address"; //Later, remove?
 
-// var savedContacts = [{
-// 		name: "Nhi 1",
-// 		sipAddress: "sip:nhi@192.168.1.54"
-// 	},
-// 	{
-// 		name: "Nhi 2",
-// 		sipAddress: "sip:nhi@192.168.1.55"
-// 	}
-// ];
 var savedContacts = [];
+
+const Status = {
+	InProgress: 0,
+	Incoming: 1,
+	Error: 2,
+	None: 3
+}
 
 var successToast = Toastify({
 	text: "Success",
@@ -48,17 +46,6 @@ var errorToast = Toastify({
 	},
 });
 
-/**
- * Get the call status
- * Called every 500ms
- */
-function call_status(){
-	sendCommandViaUDP("call_stats");
-	socket.on('call_stats', (result) => {
-	
-	})
-};
-
 // Make connection to server when web page is fully loaded.
 var socket = io.connect();
 
@@ -76,22 +63,60 @@ $(document).ready(function() {
 	});
 
 	// Hang up a call
-	$('#hangUpBtn').click(function() {
+	$('#progressHangUpBtn').click(function() {
 		// do we need to supply addresses to hang up a call?
 		// remove if not needed
-		var calleeText = $('#call-box-text').text().split(" ");
+		var calleeText = $('#inProgressText').text().split(" ");
 		console.log(`calleeText = ${calleeText}`);
 		var callee = calleeText[1];
 
 		sendCommandViaUDP(`end_call=${callee}`);
 
-		hideCallBox();
-
 		socket.on('end_call', function(result) {
 			console.log(result);
-			callInProgress = false;
+			if (result.toLowerCase() === "error") {
+				callInProgress = true;
+				setStatusBox(Status.Error, result);
+			} 	
 		});
 	});
+
+	$('#incomingHangUpBtn').click(function() {
+		// do we need to supply addresses to hang up a call?
+		// remove if not needed
+		var calleeText = $('#incomingText').text().split(" ");
+		console.log(`calleeText = ${calleeText}`);
+		var callee = calleeText[3];
+
+		sendCommandViaUDP(`end_call=${callee}`); //should we use end_call or have a new cmd reject call?
+
+		socket.on('end_call', function(result) {
+			if (result.toLowerCase() === "error") {
+				callInProgress = true;
+				setStatusBox(Status.Error, result);
+			} 	
+		});
+	});
+
+	// Pick up an incoming call
+	$('#incomingPickUpBtn').click(function() {
+		// do we need to supply addresses to hang up a call?
+		// remove if not needed
+		var calleeText = $('#incomingText').text().split(" ");
+		console.log(`calleeText = ${calleeText}`);
+		var callee = calleeText[3];
+
+		sendCommandViaUDP(`pick_up=${callee}`); //should we use end_call or have a new cmd reject call?
+
+		socket.on('pick_up', function(result) {
+			console.log(result);
+			if (result.toLowerCase() === "error") {
+				callInProgress = true;
+				setStatusBox(Status.Error, result);
+			} 	
+		});
+	});
+
 
 	// Call a saved contact
 	// $("#contactsTable .tableCallBtn").click(function() {
@@ -106,6 +131,34 @@ $(document).ready(function() {
 		makeCall(callee);
 	});
 
+	// Add a contact
+	$('#addContactBtn').click(function(){
+		let name = $('#contactNameInput').val();
+		let address = $('#contactAddressInput').val();
+		let contact = {
+			name: name,
+			sipAddress: address
+		}
+
+		sendCommandViaUDP(`add_contact=${name}&${address}`)
+		socket.on('add_contact', function(result) {
+			if (result.toLowerCase() !== 'success') {
+				console.log(result);
+			}
+		});
+
+		savedContacts.push(contact);
+		appendContact(name, address);
+
+		$('#contactNameInput').val('');
+		$('#contactAddressInput').val('');
+
+		// save to json file
+		$.post('/saveContact', JSON.stringify(contact), function(response) {
+			console.log('Successfully saved contact to file');
+		}, 'json');
+	});
+
 	// Stop program
 	$('#stop').click(function(){
 		shutdown();
@@ -117,7 +170,36 @@ function sendCommandViaUDP(message) {
 	socket.emit('udpCommand', message);
 };
 
-// setInterval(() => {heartbeat_info()}, 1000);
+/**
+ * Get the call status
+ * Called every 500ms
+ */
+function call_status(){
+	sendCommandViaUDP("call_status");
+	socket.on('call_status', (result) => {
+		console.log(result.status);
+		switch(result.status.toLowerCase()) {
+			case "incoming":
+				callInProgress = true;
+				setStatusBox(Status.Incoming, result.address);
+				break;
+			case "in_progress":
+				callInProgress = true;
+				setStatusBox(Status.InProgress, result.address);
+				break;
+			case "error":
+				callInProgress = false;
+				setStatusBox(Status.Error, result.error);
+				break;
+			case "none":
+				callInProgress = false;
+				setStatusBox(Status.None, "");
+				break;
+		}
+	})
+};
+
+setInterval(() => {call_status()}, 750);
 
 /**
  * Sends a msg to the C app to call the provided sip address
@@ -133,21 +215,41 @@ function makeCall(callee) {
 
 	socket.on('make_call', function(result) {
 		console.log(result);
-		callInProgress = true;
+		if (result.toLowerCase() === "error") {
+			callInProgress = false;
+			setStatusBox(Status.Error, result);
+		} 	
 	});
 }
 
-// Shows the call box when we initiate a call
-// User can hang up the call form here
-function showCallBox(callee) {
-	$('#call-box-text').text(`Calling ${callee}`);
-	$('#call-box').show();
-}
-
-// Hides the call box when the user hangs up
-function hideCallBox() {
-	$('#call-box-text').text('');
-	$('#call-box').hide();
+function setStatusBox(status, data) {
+	switch (status) {
+		case Status.Incoming:
+			// show incoming box, hide the others
+			console.log("showing incoming status");
+			$('#inProgressBox').hide();
+			$('#errorBox').hide();
+			$('#incomingText').text(`Incoming call from ${data}`);
+			$('#incomingBox').show();
+			break;
+		case Status.InProgress:
+			$('#incomingBox').hide();
+			$('#errorBox').hide();
+			$('#inProgressText').text(`Calling ${data}`);
+			$('#inProgressBox').hide();
+			break;
+		case Status.Error:
+			$('#incomingBox').hide();
+			$('#inProgressBox').hide();	
+			$('#errorText').text(`Error: ${data}`);
+			$('#errorBox').show();
+			break;
+		case Status.None:
+			$('#incomingBox').hide();
+			$('#inProgressBox').hide();	
+			$('#errorBox').hide();	
+			break;	
+	}
 }
 
 function onboardUser() {
@@ -166,20 +268,25 @@ function onboardUser() {
 	});
 }
 
+// Appends a contact to the contacts table
+function appendContact(name, address) {
+	let tableRow = `<tr>
+		<td>${name}</td>
+		<td>${address}</td>
+		<td>
+			<input type="button" class="tableCallBtn" value="Call">
+		</td>
+	</tr>`
+
+	$('#contactsTable tr:last').after(tableRow);
+}
+
 function loadContacts() {
 	// load from json file
 	$.getJSON("data/contacts.json", function(data){
 		data.forEach((contact) => {
 			savedContacts.push(contact);
-			let tableRow = `<tr>
-				<td>${contact.name}</td>
-				<td>${contact.sipAddress}</td>
-				<td>
-					<input type="button" class="tableCallBtn" value="Call">
-				</td>
-			</tr>`
-	
-			$('#contactsTable tr:last').after(tableRow);
+			appendContact(contact.name, contact.sipAddress);
 
 			sendCommandViaUDP(`add_contact=${contact.name}&${contact.sipAddress}`);
 

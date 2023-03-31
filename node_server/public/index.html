@@ -10,9 +10,22 @@
 
 <body>
 	<h1>433 IP Phone</h1>
-	<div id="call-box">
-		<h3 id="call-box-text">Calling</h3>
-		<input type="button" id="hangUpBtn" value="Hang Up">
+	<!--Status box: Selectively show each box based on call status-->
+	<div id="statusBox">
+		<div class="status" id="inProgressBox">
+			<h3 id="inProgressText">Calling</h3>
+			<input type="button" id="progressHangUpBtn" value="Hang Up">
+		</div>
+
+		<div class="status" id="incomingBox">
+			<h3 id="incomingText">Incoming call from</h3>
+			<input type="button" id="incomingPickUpBtn" value="Pick Up">
+			<input type="button" id="incomingHangUpBtn" value="Hang Up">
+		</div>
+
+		<div class="status" id="errorBox">
+			<h3 id="errorText">Error</h3>
+		</div>
 	</div>
 
 	<div id="make-call">
@@ -22,12 +35,6 @@
 				<input type="text" id="sipInput" placeholder="Enter a SIP address">
 				<input type="button" id="callBtn" value="Call">
 			</p>
-			
-			<div id="control">
-				<p>
-					<input type="button" id="stop" value="Terminate Program">
-				</p>
-			</div>
 		</form>
 	</div>
 
@@ -35,26 +42,30 @@
 		<h2>Saved Contacts</h2>
 		<form>
 			<table id="contactsTable">
-				<!--Table headings-->
-				<thead>
-					<tr>
-						<th>Name</th>
-						<th>SIP Address</th>
-						<th></th>
-					</tr>
-				</thead>
-				
-				<!--Contacts-->
-				<tbody id="contactsTableBody">
-
-				</tbody>
+				<tr>
+					<th>Name</th>
+					<th>SIP Address</th>
+					<th></th>
+				</tr>
 			</table>
-			<!--Add contact-->
-			<!-- <div id="add-contact">
-				<input id="addBtn" type="button" value="Add contact">
-			</div> -->
 		</form>
-
+	</div>
+	<div id="add-contact">
+		<form>
+			<p>
+				<h3>Add a contact</h3>
+				<label for="contactNameInput">Name</label>
+				<input type="text" id="contactNameInput" placeholder="Name">
+				<label for="contactAddressInput">SIP Address</label>
+				<input type="text" id="contactAddressInput">
+				<input type="button" id="addContactBtn" value="Add">
+			</p>
+		</form>
+	</div>
+	<div id="control">
+		<p>
+			<input type="button" id="stop" value="Terminate Program">
+		</p>
 	</div>
 	<script src="/socket.io/socket.io.js" type="text/javascript"></script>
 	<script src="http://code.jquery.com/jquery-1.11.1.min.js" type="text/javascript"></script>
