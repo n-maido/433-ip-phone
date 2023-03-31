@@ -21,7 +21,7 @@ void writeMessage(char* msg1, char* msg2);
 // Clear the LCD
 void clearMessage();
 // Initialize the LCD
-static void initializeLCD();
+void LCD_initialize();
 
 /*int main()
 {
@@ -31,7 +31,7 @@ static void initializeLCD();
     return 0;
 }*/
 
-static void initializeLCD()
+void LCD_initialize()
 {
     // Set every GPIO pin to OUTPUT
     GPIO_writeDirection(RS_GPIO_NUMBER, "out");
