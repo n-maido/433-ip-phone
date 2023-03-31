@@ -27,6 +27,12 @@
 #define DELAY_OFF "delay_off"
 #define DELAY_ON "delay_on"
 
+//returns the ms required for delay_off/delay_on given hz.
+static inline unsigned int hz_to_ms(const unsigned int hz){
+    //divide by half the actual hz because need to figure out the setting for duration on *and* off.
+    return 1000 / (hz * 2);
+}
+
 static void changeTrigger(const char * led_trigger, const char * option){
     writeToFile(led_trigger, option);
 }
@@ -111,6 +117,64 @@ void LED_turnOffAll(void){
     writeToFile(LED3_BRIGHTNESS, "0");
 }
 
+//blink an LED with a specific frequency.
+void LED_blink_noblock(LED_number LED, const unsigned int hz){
+    unsigned int ms = hz_to_ms(hz);
+    char numBuff[20] = "";
+    snprintf(numBuff, 20, "%d", ms);
+    switch (LED)
+    {
+    case LED_ZERO:
+        writeToFile(LED0_TRIGGER, "timer");
+        sleepMs(300);
+        writeToFile(LED0_PATH DELAY_ON, numBuff);
+        writeToFile(LED0_PATH DELAY_OFF, numBuff);
+        break;
+    case LED_ONE:
+        writeToFile(LED1_TRIGGER, "timer");
+        sleepMs(300);
+        writeToFile(LED1_PATH DELAY_ON, numBuff);
+        writeToFile(LED1_PATH DELAY_OFF, numBuff);
+        break;
+    case LED_TWO:
+        writeToFile(LED2_TRIGGER, "timer");
+        sleepMs(300);
+        writeToFile(LED2_PATH DELAY_ON, numBuff);
+        writeToFile(LED2_PATH DELAY_OFF, numBuff);
+        break;
+    case LED_THREE:
+        writeToFile(LED3_TRIGGER, "timer");
+        sleepMs(300);
+        writeToFile(LED3_PATH DELAY_ON, numBuff);
+        writeToFile(LED3_PATH DELAY_OFF, numBuff);
+        break;
+    default:
+        break;
+    }
+}
+
+//stops an LED blink.
+void LED_stopBlink(LED_number LED){
+    const char trig[6] = "none";
+    switch (LED)
+    {
+    case LED_ZERO:
+        writeToFile(LED0_TRIGGER, trig);
+        break;
+    case LED_ONE:
+        writeToFile(LED1_TRIGGER, trig);
+        break;
+    case LED_TWO:
+        writeToFile(LED2_TRIGGER, trig);
+        break;
+    case LED_THREE:
+        writeToFile(LED3_TRIGGER, trig);
+        break;
+    default:
+        break;
+    }
+}
+
 void LED_turnOnms(LED_number LED, const unsigned long long microseconds){
     LED_turnOn(LED);
     sleepMs(microseconds);
@@ -121,12 +185,6 @@ void LED_turnOnAllms(const unsigned long long microseconds){
     LED_turnOnAll();
     sleepMs(microseconds);
     LED_turnOffAll();
-}
-
-//returns the ms required for delay_off/delay_on given hz.
-static inline unsigned int hz_to_ms(const unsigned int hz){
-    //divide by half the actual hz because need to figure out the setting for duration on *and* off.
-    return 1000 / (hz * 2);
 }
 
 void LED_blink(LED_number LED, const unsigned int hz, const unsigned long long duration_ms){

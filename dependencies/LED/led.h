@@ -43,8 +43,13 @@ void LED_blink(LED_number LED, const unsigned int hz, const unsigned long long d
 //blink all LEDs with hz frequency. Will sleep / block program execution while blinking.
 void led_blinkAll(const unsigned int hz, const unsigned long long duration_ms);
 
-//Startup function. Call before anything else.
+//blink an LED with a specific frequency. Does not block, but requires 300ms of time before blinking begins.
+void LED_blink_noblock(LED_number LED, const unsigned int hz);
+//stops an LED blink.
+void LED_stopBlink(LED_number LED);
+
+//startup function. Call before anything else.
 void LED_startUp(void);
-//Cleanup function. Resets LEDs to defaults.
+//cleanup function. Use to reset LEDs to default.
 void LED_cleanUp(void);
 #endif
