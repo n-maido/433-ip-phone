@@ -139,6 +139,7 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
 
 //constantly wait for messages on the given port. 
 //returns -1 on failure, and will send out a shutdown request if it fails / receives a quit request.
+//can it shutdown 
 static int udp_receive_thread(void){
     printf("Listening on UDP port 11037.\n");
     while(waitForMessages){
