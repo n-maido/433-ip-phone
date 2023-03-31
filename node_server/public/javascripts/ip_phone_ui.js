@@ -94,7 +94,9 @@ $(document).ready(function() {
 	});
 
 	// Call a saved contact
-	$(".tableCallBtn").click(function() {
+	// $("#contactsTable .tableCallBtn").click(function() {
+	$('#contactsTable').on('click', '.tableCallBtn', function() {
+		console.log("contact clicked");
 		// get the row
 		var row = $(this).closest("tr");
 
@@ -167,7 +169,6 @@ function onboardUser() {
 function loadContacts() {
 	// load from json file
 	$.getJSON("data/contacts.json", function(data){
-		console.log(data); 
 		data.forEach((contact) => {
 			savedContacts.push(contact);
 			let tableRow = `<tr>

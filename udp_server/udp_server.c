@@ -98,6 +98,8 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
 
         printf("new contact: %s, %s\n", name, sipAddress);
 
+        //TODO: call LCD_add_contact(name, sipAddress)
+
         //TODO: return their sip address?
         strncpy(r, "{\"msgType\":\"add_contact\", \"content\": \"Success\"}\n", 100);
 
