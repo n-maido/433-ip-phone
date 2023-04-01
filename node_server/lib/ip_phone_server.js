@@ -86,6 +86,12 @@ function handleCommand(socket) {
 				case "pick_up":
 					socket.emit('pick_up', reply.content);
 					break;
+				case "volume":
+					socket.emit('volume', reply.content);
+					break;
+				case "gain":
+					socket.emit('pick_up', reply.content);
+					break;
 			}
 			client.close();
 

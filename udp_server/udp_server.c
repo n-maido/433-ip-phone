@@ -34,11 +34,13 @@ typedef enum {
     MAKE_CALL,
     END_CALL,
     PICK_UP,
+    SET_VOLUME,
+    SET_GAIN,
     STOP,
     OPTIONS_MAX_COUNT
 } UDP_OPTIONS;
 
-const char optionValues[OPTIONS_MAX_COUNT][24] = {"call_status", "new_user=", "add_contact=", "make_call=", "end_call=", "pick_up=", "stop"};
+const char optionValues[OPTIONS_MAX_COUNT][24] = {"call_status", "new_user=", "add_contact=", "make_call=", "end_call=", "pick_up=", "set_volume", "set_gain", "stop"};
 
 static inline void toLowerString(char * s){
     for(int i = 0; i < strlen(s); ++i){
@@ -190,6 +192,48 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
             snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"pick_up\", \"content\": \"Error\"}\n");
         }
        
+    } else if(!strncmp(msg, optionValues[SET_VOLUME], strlen(optionValues[SET_VOLUME]))){
+        //Expected message format: "set_volume n"
+        char temp[20] = "";
+        int volume = -1;
+        sscanf(msg, "%s %d", temp, &volume);
+        printf("setting volume to %d\n", volume);
+
+        if(volume < 0 || volume > 100){
+            snprintf(r, 100, "{\"msgType\":\"volume\", \"content\": \"Error: Invalid volume of %d.\"}\n", volume);
+        }else{
+            //TODO: call set_vol()
+            bool success = true; // placeholder, remove later
+            if (success){
+                strncpy(r, "{\"msgType\":\"volume\", \"content\": \"Success\"}\n", 100);
+                return;
+            }else{
+                snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"volume\", \"content\": \"Error\"}\n");
+            }
+        }
+        return;
+        
+    } else if(!strncmp(msg, optionValues[SET_GAIN], strlen(optionValues[SET_GAIN]))){
+        //Expected message format: "set_gain n"
+        char temp[20] = "";
+        int gain = -1;
+        sscanf(msg, "%s %d", temp, &gain);
+        printf("setting gain to %d\n", gain);
+
+        if(gain < 0 || gain > 100){
+            snprintf(r, 100, "{\"msgType\":\"gain\", \"content\": \"Error: Invalid gain of %d.\"}\n", gain);
+        }else{
+            //TODO: call set_gain()
+            bool success = true; // placeholder, remove later
+            if (success){
+                strncpy(r, "{\"msgType\":\"gain\", \"content\": \"Success\"}\n", 100);
+                return;
+            }else{
+                snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"gain\", \"content\": \"Error\"}\n");
+            }
+        }
+        return;
+        
     } else if (!strncmp(msg, optionValues[STOP], strlen(optionValues[STOP]))){
         strncpy(r, "{\"msgType\":\"stop\", \"content\": \"Stopping program.\"}\n", 100);
         return;

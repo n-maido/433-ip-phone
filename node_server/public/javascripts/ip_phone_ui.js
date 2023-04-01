@@ -157,8 +157,66 @@ $(document).ready(function() {
 	});
 
 	// Volume control
+	$('#volumeDown').click(function(){
+		var volume = parseInt($('#curVolume').val());
+		volume = isNaN(volume) ? -1 : volume - 5;
+
+		if (volume >= 0 && volume <= 100) {
+			sendCommandViaUDP(`set_volume ${volume}`);
+			socket.on('volume', function(result) {
+				if (result.toLowerCase() === "error") {
+					callInProgress = true;
+					setStatusBox(Status.Error, result);
+				} 
+			});
+		}		
+	});
+	$('#volumeUp').click(function(){
+		var volume = parseInt($('#curVolume').val());
+		volume = isNaN(volume) ? -1 : volume + 5;
+		console.log("vol = " + volume);
+
+		if (volume >= 0 && volume <= 100) {
+			sendCommandViaUDP(`set_volume ${volume}`);
+			socket.on('volume', function(result) {
+				if (result.toLowerCase() === "error") {
+					callInProgress = true;
+					setStatusBox(Status.Error, result);
+				} 
+			});
+		}
+	});
 
 	// Gain control
+	$('#gainDown').click(function(){
+		var gain = parseInt($('#curGain').val());
+		gain = isNaN(gain) ? -1 : gain - 5;
+
+		if (gain >= 0 && gain <= 100) {
+			sendCommandViaUDP(`set_gain ${gain}`);
+			socket.on('gain', function(result) {
+				if (result.toLowerCase() === "error") {
+					callInProgress = true;
+					setStatusBox(Status.Error, result);
+				} 
+			});
+		}
+	});
+
+	$('#gainUp').click(function(){
+		var gain = parseInt($('#curGain').val());
+		gain = isNaN(gain) ? -1 : gain + 5;
+
+		if (gain >= 0 && gain <= 100) {
+			sendCommandViaUDP(`set_gain ${gain}`);
+			socket.on('gain', function(result) {
+				if (result.toLowerCase() === "error") {
+					callInProgress = true;
+					setStatusBox(Status.Error, result);
+				} 
+			});
+		}
+	});
 
 	// Stop program
 	$('#stop').click(function(){
