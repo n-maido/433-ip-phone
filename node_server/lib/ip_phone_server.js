@@ -11,7 +11,7 @@ var dgram = require('dgram');
 
 exports.listen = function(server) {
 	io = socketio.listen(server);
-	io.set('log level 1');
+	io.set('log level', 1);
 
 	io.sockets.on('connection', function(socket) {
 		handleCommand(socket);
@@ -25,7 +25,7 @@ function handleCommand(socket) {
 
 	// Passed string of command to relay
 	socket.on('udpCommand', function(data) {
-		console.log('udpCommand command: ' + data);
+		// console.log('udpCommand command: ' + data);
 
 		// Info for connecting to the local process via UDP
 		var PORT = 11037;
@@ -36,13 +36,13 @@ function handleCommand(socket) {
 
 		client.on('listening', function () {
 			var address = client.address();
-			console.log('UDP Client: listening on ' + address.address + ":" + address.port);
+			// console.log('UDP Client: listening on ' + address.address + ":" + address.port);
 		});
 
 		client.send(buffer, 0, buffer.length, PORT, HOST, function(err, bytes) {
 			if (err) 
 				throw err;
-			console.log('UDP message sent to ' + HOST +':'+ PORT);
+			// console.log('UDP message sent to ' + HOST +':'+ PORT);
 		});
 
 		// Set a timeout for the udp response
@@ -62,7 +62,7 @@ function handleCommand(socket) {
 			clearTimeout(udpErrorTimer);
 			socket.emit('udpSuccess');
 
-			console.log("UDP Client: message Rx" + remote.address + ':' + remote.port +' - ' + message);
+			// console.log("UDP Client: message Rx" + remote.address + ':' + remote.port +' - ' + message);
 
 			var reply = JSON.parse(message.toString('utf8'));
 			
@@ -74,7 +74,6 @@ function handleCommand(socket) {
 					socket.emit('call_status', reply.content);
 					break;
 				case "call_started":
-					console.log("received call_starting. emitting to socket");
 					socket.emit('call_started', reply.content.address);
 					break;
 				case "make_call":

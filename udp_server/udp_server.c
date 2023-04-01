@@ -80,7 +80,7 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
     if(!strncmp(msg, optionValues[CALL_STATUS], strlen(optionValues[CALL_STATUS]))){
         // TODO: get call status from Call module
         // 0 = none, 1 = incoming, 2 = ongoing, 3 = error
-        int status = 2;
+        int status = 0;
         char* address = "sip@sip:123.123.12.1";
 
         // if ongoing call, get the current volume and mic gain level

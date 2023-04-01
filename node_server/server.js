@@ -10,6 +10,7 @@ var PORT_NUMBER = 8080;
 
 var http = require('http');
 var fs   = require('fs');
+const { writeFile } = require("fs/promises");
 var path = require('path');
 var mime = require('mime');
 
@@ -18,18 +19,23 @@ var mime = require('mime');
  */
 var server = http.createServer(function(request, response) {
 	var filePath = false;
+	console.log("received request url: " + request.url);
 	
-	if (request.url == '/') {
+	if (request.url === '/') {
 		filePath = 'public/index.html';
-	} else if (request.url == '/saveContact') {
+		var absPath = './' + filePath;
+		serveStatic(response, absPath);
+	} else if (request.url === '/saveContact') {
 		saveContact(request, response);
-		return;
+		// return;
 	} else {
 		filePath = 'public' + request.url;
+		var absPath = './' + filePath;
+		serveStatic(response, absPath);
 	}
 	
-	var absPath = './' + filePath;
-	serveStatic(response, absPath);
+	// var absPath = './' + filePath;
+	// serveStatic(response, absPath);
 });
 
 
@@ -68,32 +74,19 @@ function sendFile(response, filePath, fileContents) {
 }
 
 function saveContact(request, response) {
+	console.log("save endpt reached");
 	let contactsPath = './public/data/contacts.json';
-	request.on('data', function(data) { 
-		console.log("save endpt reached: " + data);
+	request.on('data', async function(data) { 
+		console.log("received data: " + data);
 		let contact = JSON.parse(data);
 
-		fs.readFile(contactsPath, function(err, data) {
-			if (err) {
-				console.log(err);
-				response.send(err);
-			} else {
-				console.log("read json file");
-				let contacts = JSON.parse(data);
-				contacts.push(contact);
-				console.log(contacts);
+		let contactsJSON = fs.readFileSync(contactsPath, 'utf-8');
+		let contacts = JSON.parse(contactsJSON);
+		contacts.push(contact);
 
-				// TODO: file not saving
-				fs.writeFile(contactsPath, JSON.stringify(contacts), function(err){
-					if (err) {
-						console.log(err);
-						response.send(err);
-					} else {
-						console.log("wrote to json file");
-					}
-				});
-			}
-		});
+		fs.writeFileSync(contactsPath, JSON.stringify(contacts), 'utf-8');
+		response.end();
+
 	});
 	response.end();
 }

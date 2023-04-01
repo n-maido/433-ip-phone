@@ -151,8 +151,10 @@ $(document).ready(function() {
 		$('#contactAddressInput').val('');
 
 		// save to json file
+		console.log("sending post json request");
 		$.post('/saveContact', JSON.stringify(contact), function(response) {
 			console.log('Successfully saved contact to file');
+			console.log(response);
 		}, 'json');
 	});
 
@@ -309,8 +311,6 @@ function makeCall(callee) {
 		return;
 	}
 	sendCommandViaUDP(`make_call=${callee}`);
-
-	showCallBox(callee);
 
 	socket.on('make_call', function(result) {
 		console.log(result);
