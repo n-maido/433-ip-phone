@@ -1,3 +1,5 @@
+
+#make file taken form pjsua documentation and modified by Sanseerat Virk
 PJDIR = /home/san/pjsua/pjproject-2.13
 include $(PJDIR)/build.mak
 OUTDIR = $(HOME)/cmpt433/public/projectApps
