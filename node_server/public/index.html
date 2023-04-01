@@ -23,15 +23,33 @@
 	</div>
 	<!--Call status box: Selectively show each box based on call status-->
 	<div id="statusBox">
-		<div class="status" id="inProgressBox">
-			<h3 id="inProgressText">Calling</h3>
-			<input type="button" id="progressHangUpBtn" value="Hang Up">
+		<div class="status" id="ongoingBox">
+			<h3 id="ongoingText">Calling</h3>
+			<div class="control">
+				<p>Volume: </p>
+				<p>
+					<input type="button" id="volumeDown" value=" - ">
+					<input type="text" id="curVolume" value="0" size="3" readonly="readonly">
+					<input type="button" id="volumeUp" value=" + ">
+				</p>
+				<p>Mic gain:</p>
+				<p>
+					<input type="button" id="gainDown" value=" - ">
+					<input type="text" id="curGain" value="0" size="3" readonly="readonly">
+					<input type="button" id="gainUp" value=" + ">
+				</p>
+			</div>
+			<div class="control">
+				<input type="button" id="ongoingHangUpBtn" value="Hang Up">
+			</div>
 		</div>
 
 		<div class="status" id="incomingBox">
 			<h3 id="incomingText">Incoming call from</h3>
-			<input type="button" id="incomingPickUpBtn" value="Pick Up">
-			<input type="button" id="incomingHangUpBtn" value="Hang Up">
+			<div class="control">
+				<input type="button" id="incomingPickUpBtn" value="Pick Up">
+				<input type="button" id="incomingHangUpBtn" value="Hang Up">
+			</div>
 		</div>
 
 		<div class="status" id="errorBox">
@@ -73,7 +91,7 @@
 			</p>
 		</form>
 	</div>
-	<div id="control">
+	<div class="control">
 		<p>
 			<input type="button" id="stop" value="Terminate Program">
 		</p>

@@ -12,10 +12,10 @@ var webAlive = false;
 var savedContacts = [];
 
 const Status = {
-	InProgress: 0,
+	None: 0,
 	Incoming: 1,
-	Error: 2,
-	None: 3
+	Ongoing: 2,
+	Error: 3
 }
 
 var successToast = Toastify({
@@ -60,10 +60,10 @@ $(document).ready(function() {
 	});
 
 	// Hang up a call
-	$('#progressHangUpBtn').click(function() {
+	$('#ongoingHangUpBtn').click(function() {
 		// do we need to supply addresses to hang up a call?
 		// remove if not needed
-		var calleeText = $('#inProgressText').text().split(" ");
+		var calleeText = $('#ongoingText').text().split(" ");
 		console.log(`calleeText = ${calleeText}`);
 		var callee = calleeText[1];
 
@@ -156,6 +156,10 @@ $(document).ready(function() {
 		}, 'json');
 	});
 
+	// Volume control
+
+	// Gain control
+
 	// Stop program
 	$('#stop').click(function(){
 		shutdown();
@@ -174,21 +178,20 @@ function sendCommandViaUDP(message) {
 function call_status(){
 	sendCommandViaUDP("call_status");
 	socket.on('call_status', (result) => {
-		console.log(result.status);
-		switch(result.status.toLowerCase()) {
-			case "incoming":
+		switch(result.status) {
+			case Status.Incoming:
 				callInProgress = true;
 				setStatusBox(Status.Incoming, result.address);
 				break;
-			case "in_progress":
+			case Status.Ongoing:
 				callInProgress = true;
-				setStatusBox(Status.InProgress, result.address);
+				setStatusBox(Status.Ongoing, result.address);
 				break;
-			case "error":
+			case Status.Error:
 				callInProgress = false;
 				setStatusBox(Status.Error, result.error);
 				break;
-			case "none":
+			case Status.None:
 				callInProgress = false;
 				setStatusBox(Status.None, "");
 				break;
@@ -265,26 +268,26 @@ function setStatusBox(status, data) {
 		case Status.Incoming:
 			// show incoming box, hide the others
 			console.log("showing incoming status");
-			$('#inProgressBox').hide();
+			$('#ongoingBox').hide();
 			$('#errorBox').hide();
 			$('#incomingText').text(`Incoming call from ${data}`);
 			$('#incomingBox').show();
 			break;
-		case Status.InProgress:
-			$('#incomingBox').hide();
+		case Status.Ongoing:
+			$('#incoming').hide();
 			$('#errorBox').hide();
-			$('#inProgressText').text(`Calling ${data}`);
-			$('#inProgressBox').hide();
+			$('#ongoingText').text(`Calling ${data}`);
+			$('#ongoingBox').show();
 			break;
 		case Status.Error:
 			$('#incomingBox').hide();
-			$('#inProgressBox').hide();	
+			$('#ongoingBox').hide();	
 			$('#errorText').text(`Error: ${data}`);
 			$('#errorBox').show();
 			break;
 		case Status.None:
 			$('#incomingBox').hide();
-			$('#inProgressBox').hide();	
+			$('#ongoingBox').hide();	
 			$('#errorBox').hide();	
 			break;	
 	}

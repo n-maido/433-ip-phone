@@ -77,18 +77,12 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
     //need to check if enter has been pressed.
     if(!strncmp(msg, optionValues[CALL_STATUS], strlen(optionValues[CALL_STATUS]))){
         // TODO: get call status from Call module
-        int status = 0;
+        // 0 = none, 1 = incoming, 2 = ongoing, 3 = error
+        int status = 2;
         char* address = "sip@sip:123.123.12.1";
-        switch(status) {
-            case 0: //Incoming call
-                snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": \"incoming\", \"address\": \"%s\"}}\n", address);
-                break;
-            case 1: //Call in progress
-                snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": \"in_progress\", \"address\": \"%s\"}}\n", address);
-                break;
-
-        }
         
+        snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\"}}\n", status, address);
+
         return;
     } else if(!strncmp(msg, optionValues[NEW_USER], strlen(optionValues[NEW_USER]))){
         // expects a msg of the format "new_user=<username>"
