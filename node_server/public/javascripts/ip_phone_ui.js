@@ -181,15 +181,15 @@ function call_status(){
 		switch(result.status) {
 			case Status.Incoming:
 				callInProgress = true;
-				setStatusBox(Status.Incoming, result.address);
+				setStatusBox(Status.Incoming, result);
 				break;
 			case Status.Ongoing:
 				callInProgress = true;
-				setStatusBox(Status.Ongoing, result.address);
+				setStatusBox(Status.Ongoing, result);
 				break;
 			case Status.Error:
 				callInProgress = false;
-				setStatusBox(Status.Error, result.error);
+				setStatusBox(Status.Error, result);
 				break;
 			case Status.None:
 				callInProgress = false;
@@ -270,19 +270,21 @@ function setStatusBox(status, data) {
 			console.log("showing incoming status");
 			$('#ongoingBox').hide();
 			$('#errorBox').hide();
-			$('#incomingText').text(`Incoming call from ${data}`);
+			$('#incomingText').text(`Incoming call from ${data.address}`);
 			$('#incomingBox').show();
 			break;
 		case Status.Ongoing:
 			$('#incoming').hide();
 			$('#errorBox').hide();
-			$('#ongoingText').text(`Calling ${data}`);
+			$('#ongoingText').text(`Calling ${data.address}`);
+			$('#curVolume').val(data.vol);
+			$('#curGain').val(data.gain);
 			$('#ongoingBox').show();
 			break;
 		case Status.Error:
 			$('#incomingBox').hide();
 			$('#ongoingBox').hide();	
-			$('#errorText').text(`Error: ${data}`);
+			$('#errorText').text(`Error: ${data.error}`);
 			$('#errorBox').show();
 			break;
 		case Status.None:

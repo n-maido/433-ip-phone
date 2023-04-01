@@ -80,9 +80,31 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         // 0 = none, 1 = incoming, 2 = ongoing, 3 = error
         int status = 2;
         char* address = "sip@sip:123.123.12.1";
-        
-        snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\"}}\n", status, address);
 
+        // if ongoing call, get the current volume and mic gain level
+        switch (status) {
+            case 0:
+                snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d}}\n", status);
+                break;
+            case 1:
+                snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\"}}\n", status, address);
+                break;
+            case 2: 
+            {
+                int vol = 50;
+                int gain = 10;
+                snprintf(r, 150, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\", \"vol\": %d, \"gain\": %d}}\n", status, address, vol, gain);
+                break;
+            }
+            case 3:
+            {
+                char* error = "Error";
+                snprintf(r, 150, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"error\": \"%s\"}}\n", status, error);
+                break;
+            }
+            default:
+                snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d}}\n", status);
+        }
         return;
     } else if(!strncmp(msg, optionValues[NEW_USER], strlen(optionValues[NEW_USER]))){
         // expects a msg of the format "new_user=<username>"
