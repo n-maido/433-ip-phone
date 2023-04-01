@@ -19,6 +19,10 @@ exports.listen = function(server) {
 }; 
 
 function handleCommand(socket) {
+	socket.on('web_alive', function() {
+		socket.emit('web_alive');
+	})
+
 	// Passed string of command to relay
 	socket.on('udpCommand', function(data) {
 		console.log('udpCommand command: ' + data);
@@ -41,6 +45,11 @@ function handleCommand(socket) {
 			console.log('UDP message sent to ' + HOST +':'+ PORT);
 		});
 
+		// Set a timeout for the udp response
+		var udpErrorTimer = setTimeout(function() {
+			socket.emit("udpError");
+		}, 800);
+
 		/** 
 		 * Handle an incoming message from the udp server
 		 * Response messages are json objects in the format: 
@@ -49,7 +58,10 @@ function handleCommand(socket) {
 		 *     "content": "msgContent"
 		 * }
 		 */  
-		client.on('message', function (message, remote) {			
+		client.on('message', function (message, remote) {	
+			clearTimeout(udpErrorTimer);
+			socket.emit('udpSuccess');
+
 			console.log("UDP Client: message Rx" + remote.address + ':' + remote.port +' - ' + message);
 
 			var reply = JSON.parse(message.toString('utf8'));

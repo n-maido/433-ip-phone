@@ -6,8 +6,8 @@
  */
 
 var callInProgress = false;
-var username = "user";
-var mySipAddress = "sip:address"; //Later, remove?
+var phoneAlive = false;
+var webAlive = false;
 
 var savedContacts = [];
 
@@ -50,9 +50,6 @@ var errorToast = Toastify({
 var socket = io.connect();
 
 $(document).ready(function() {
-	// show the onboarding prompt
-	onboardUser();
-
 	// populate saved contacts table
 	loadContacts();
 
@@ -199,7 +196,48 @@ function call_status(){
 	})
 };
 
-setInterval(() => {call_status()}, 750);
+setInterval(() => {call_status()}, 500);
+
+/**
+ * Called every 1s
+ * Checks if the web server and c application is responsive 
+ */
+function checkAlive() {
+	// Check if the server is responding
+	socket.emit('web_alive');
+
+	// If the server hasn't responded for 800ms, show error
+	var serverErrorTimer = setTimeout(function() {
+		webAlive = false;
+		$('#webStatus').text('NOT RUNNING');
+		$('#webStatus').css('color', 'red');
+
+	}, 800);
+
+	socket.on('web_alive', function(){
+		clearTimeout(serverErrorTimer);
+		webAlive = true;
+		$('#webStatus').text('RUNNING');
+		$('#webStatus').css('color', 'green');
+	})
+
+	// Check if the udp server is responding
+	// Server sets a timeout after sending a udp msg to the c app
+	// If it receives a response, it notifies us
+	socket.on('udpError', function(){
+		phoneAlive = false;
+		$('#phoneStatus').text('OFF');
+		$('#phoneStatus').css('color', 'red');
+	})
+
+	socket.on('udpSuccess', function(){
+		phoneAlive = true;
+		$('#phoneStatus').text('ON');
+		$('#phoneStatus').css('color', 'green');
+	})
+}
+
+setInterval(() => {checkAlive()}, 1000);
 
 /**
  * Sends a msg to the C app to call the provided sip address

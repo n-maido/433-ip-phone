@@ -10,7 +10,18 @@
 
 <body>
 	<h1>433 IP Phone</h1>
-	<!--Status box: Selectively show each box based on call status-->
+	<!--Show phone and web server status-->
+	<div id="appStatusBox">
+		<div class="appStatus">
+			<p>Phone status:</p>
+			<p id="phoneStatus">ON</p>
+		</div>
+		<div class="appStatus">
+			<p>Webserver status:</p>
+			<p id="webStatus">RUNNING</p>
+		</div>
+	</div>
+	<!--Call status box: Selectively show each box based on call status-->
 	<div id="statusBox">
 		<div class="status" id="inProgressBox">
 			<h3 id="inProgressText">Calling</h3>

@@ -24,12 +24,33 @@ h1, h2 {
 
 .status {
 	border: thin black solid;
-	clear: both;
 	padding-left: 10pt;
 	padding-right: 10pt;
 	min-height: 100pt;
 	margin-top: 20px;
 	display: none;
+}
+
+#appStatusBox {
+	display: flex;
+	justify-content: center;
+	border: thin black solid;
+	padding-left: 10pt;
+	padding-right: 10pt;
+	margin-top: 40px;
+	margin: auto;
+}
+
+.appStatus {
+	display: flex;
+	margin-left: 50px;
+	margin-right: 50px;
+}
+
+.appStatus p {
+	font-weight: bold;
+	margin-left: 10px;
+	margin-right: 10px;
 }
 
 #inProgessBox {
@@ -61,6 +82,8 @@ th {
 	width: 10em;
 }
 
-.control {
+#control {
+	display: flex;
+	justify-content: center;
 	align-items: center;
 }
