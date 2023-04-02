@@ -32,8 +32,11 @@ int pjsua_interface_pickup_incoming_call(int ack);
 int pjsua_interface_hang_up_call(void);
 
 
-//0=no call in session , 1 = in comming call ringing, 2= call in session 
+//0=no call in session , 1 = in comming call ringing, 2= call in session 3=ongoing call
 int pjsua_interface_get_status_call(void);
+
+
+//if call in session or inocoming uri of incoming call
 
 
 //link wiht potionmeter
@@ -41,8 +44,12 @@ int pjsua_interface_get_status_call(void);
 
 //add mic ampilier fucntions
 
-//add output volume control fucntion  
 
+
+//add output volume control fucntion 0 to 100
+void pjsua_interface_set_volume(int volume);
+
+int pjsua_interface_get_volume();
 
 //automatic acount based on ip found on the interface
 

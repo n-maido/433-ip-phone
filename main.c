@@ -8,6 +8,7 @@
 #include "module_pjsua/pjsua_interface.h"
 #include "utils/utils.h"
 #include "udp_server/udp_server.h"
+#include "dependencies/buzzer/buzzer.h"
 
 static pthread_cond_t shutdownCondition = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t conditionMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -20,6 +21,7 @@ void init(void){
     //allow any of the modules to shutdown the program if it breaks.
     udp_init(&shutdownCondition, &conditionMutex);
     pjsua_interface_init(&shutdownCondition, &conditionMutex);
+    buzzer_init();
     //display inint 
 }
 
@@ -27,6 +29,7 @@ void init(void){
 static void shutdown(void){
     udp_cleanup();
     pjsua_interface_cleanup();
+    buzzer_cleanup();
     //display clean up
 }
 
