@@ -351,12 +351,13 @@ void pjsua_interface_set_volume(int set_volume)
         set_volume = 100;
     }
 
-    vol = set_volume / 100;
+    vol = set_volume / 100.0;
 
     pthread_mutex_lock(&tx_volume_mutex);
     tx_volume = set_volume;
+    PJ_LOG(3,(THIS_FILE, "volume changed to: %d -> %f",tx_volume,vol));
     pjsua_conf_adjust_tx_level(0, vol);
-    pthread_mutex_lock(&tx_volume_mutex);
+    pthread_mutex_unlock(&tx_volume_mutex);
 }
 
 int pjsua_interface_get_volume(){
@@ -365,7 +366,7 @@ int pjsua_interface_get_volume(){
 
     pthread_mutex_lock(&tx_volume_mutex);
     curr_vol=tx_volume;
-    pthread_mutex_lock(&tx_volume_mutex);
+    pthread_mutex_unlock(&tx_volume_mutex);
 
     return curr_vol;
 }
@@ -564,6 +565,21 @@ static int pjsua_thread(void){
                  PJ_LOG(3,(THIS_FILE, "make call unsuccesful, call in progress or invalid uri"));
             }
      
+        }
+
+
+        if (option[0]== 'v') {
+            
+            if(pjsua_interface_get_volume()==100){
+
+                pjsua_interface_set_volume(50);
+
+            }else{
+
+                pjsua_interface_set_volume(100);
+            }
+
+           
         }
             //make call
     }
