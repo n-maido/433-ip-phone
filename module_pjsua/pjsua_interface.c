@@ -445,7 +445,7 @@ static int pjsua_thread(void){
 
     //volume ajustement tested works still dont understand the 0 
     pjsua_conf_adjust_tx_level(0, 1.0);
-    tx_volume=1.0;
+    tx_volume=100;
 
     if (status != PJ_SUCCESS) error_exit("Error adding sound device", status);
     /* Get the current input (microphone) volume */
