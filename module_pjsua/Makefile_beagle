@@ -9,9 +9,9 @@ CFLAGS=-Wall -g -std=c99 -D _POSIX_C_SOURCE=200809L -Wshadow
 
 
 $(OUTFILE): main.c pjsua_interface.c pjsua_interface.h ../dependencies/utils/util.c ../dependencies/buzzer/buzzer.c
-        $(PJ_CC) -o $(OUTFILE)  $< pjsua_interface.c ../dependencies/LED/led.c ../dependencies/utils/util.c ../dependencies/buzzer/buzzer.c $(PJ_CFLAGS) $(PJ_LDFLAGS) $(PJ_LDLIBS)
+	$(PJ_CC) -o $(OUTFILE)  $< pjsua_interface.c ../dependencies/LED/led.c ../dependencies/utils/util.c ../dependencies/buzzer/buzzer.c $(PJ_CFLAGS) $(PJ_LDFLAGS) $(PJ_LDLIBS)
 
 
 all: $(OUTFILE)
 clean:
-        rm -f $(OUTFILE) $
+	rm -f $(OUTFILE) $

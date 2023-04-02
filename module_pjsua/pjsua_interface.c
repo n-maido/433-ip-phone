@@ -326,67 +326,6 @@ int pjsua_interface_make_call(char *str){
 
 }
 
-
-
-int pjsua_interface_make_callO1(char *str){
-
-    pthread_mutex_lock(&call_mutex);
-    if(current_call!=PJSUA_INVALID_ID)	{
-        pthread_mutex_unlock(&call_mutex);
-        return 0;
-    }
-    //pj_str_t uri = pj_str("sip:san@192.168.26.128");
-    pj_str_t uri = pj_str(str);
-    status = pjsua_call_make_call(acc_id2, &uri, 0, NULL, NULL, &current_call);
-    
-    if (status != PJ_SUCCESS){
-
-        PJ_LOG(3,(THIS_FILE, "make call uncsuccesful sip uri may be invalid call id: %d",current_call));
-        current_call=PJSUA_INVALID_ID;
-        pthread_mutex_unlock(&call_mutex);
-        return 0;
-
-    }else{
-
-        PJ_LOG(3,(THIS_FILE, "make call succesful call id: %d",current_call));
-        pthread_mutex_unlock(&call_mutex);
-    }
-
-    return 1;
-
-
-}
-int pjsua_interface_make_callO1(char *str){
-
-    pthread_mutex_lock(&call_mutex);
-    if(current_call!=PJSUA_INVALID_ID)	{
-        pthread_mutex_unlock(&call_mutex);
-        return 0;
-    }
-    //pj_str_t uri = pj_str("sip:san@192.168.26.128");
-    pj_str_t uri = pj_str(str);
-    status = pjsua_call_make_call(acc_id2, &uri, 0, NULL, NULL, &current_call);
-    
-    if (status != PJ_SUCCESS){
-
-        PJ_LOG(3,(THIS_FILE, "make call uncsuccesful sip uri may be invalid call id: %d",current_call));
-        current_call=PJSUA_INVALID_ID;
-        pthread_mutex_unlock(&call_mutex);
-        return 0;
-
-    }else{
-
-        PJ_LOG(3,(THIS_FILE, "make call succesful call id: %d",current_call));
-        pthread_mutex_unlock(&call_mutex);
-    }
-
-    return 1;
-
-
-}
-
-
-
 int pjsua_interface_hang_up_call(){
 
 
