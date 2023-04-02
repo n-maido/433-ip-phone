@@ -40,7 +40,8 @@
 #include <pthread.h>
 #include "pjsua_interface.h"
 #include <pjsua-lib/pjsua.h>
-
+#include "../dependencies/utils/util.h"
+#include "../dependencies/buzzer/buzzer.h"
 #define THIS_FILE	"pjsuaInterface"
 
 #define SIP_DOMAIN	"192.168.7.2" //make this automatic look into sample app 
@@ -53,6 +54,14 @@ static pthread_mutex_t * shutdownLock = NULL;
 
 static pthread_mutex_t call_mutex;
 static pjsua_call_id current_call = PJSUA_INVALID_ID;
+
+
+static pthread_mutex_t pickup_call_mutex;
+static int pickup_call;
+
+
+static pthread_mutex_t status_call_mutex;
+static int status_call;
 
 static pjsua_acc_id acc_id;
 static pjsua_acc_id acc_id2;
@@ -69,13 +78,52 @@ static void sendShutdownRequest(void){
     pthread_mutex_unlock(shutdownLock);
 }
 
+//return 0 if no incoming call to pick up 
+//return 1 if incoming call and is picked up
+//pickup value reset in on call state when it is picked up;
+int pjsua_interface_pickup_incoming_call(int ack){
+
+    
+    pthread_mutex_lock(&pickup_call_mutex);
+    if(pickup_call==0){
+
+        pickup_call=ack;
+        pthread_mutex_unlock(&pickup_call_mutex);
+        return 1;
+    }
+    
+    pthread_mutex_unlock(&pickup_call_mutex);
+    return 0;
+}
+
+
+//wait for 10 seconds to wait for user input to pick up call
+static void call_incoming(){
+
+    int count=0;
+
+    while(count<100){
+
+        pthread_mutex_lock(&pickup_call_mutex);
+        if(pickup_call){
+        pthread_mutex_unlock(&pickup_call_mutex);
+
+        break;
+
+        }
+        pthread_mutex_unlock(&pickup_call_mutex);
+
+        count++;
+        sleepMs(100);
+    }
+
+}
 
 /* Callback called by the library upon receiving incoming call */
 static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
                              pjsip_rx_data *rdata)
 {
     pjsua_call_info ci;
-
     PJ_UNUSED_ARG(acc_id);
     PJ_UNUSED_ARG(rdata);
 
@@ -90,16 +138,36 @@ static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 
     current_call=call_id;
     pthread_mutex_unlock(&call_mutex);
-
+    
 
     pjsua_call_get_info(call_id, &ci);
 
     PJ_LOG(3,(THIS_FILE, "Incoming call from %.*s!!",
                          (int)ci.remote_info.slen,
                          ci.remote_info.ptr));
+    if (ci.state == PJSIP_INV_STATE_INCOMING)
+    {
 
-    /* Automatically answer incoming calls with 200/OK */
-    pjsua_call_answer(call_id, 200, NULL, NULL);
+        pthread_mutex_lock(&status_call_mutex);
+        status_call = 1;
+        pthread_mutex_unlock(&status_call_mutex);
+
+        PJ_LOG(3, (THIS_FILE, "Call is ringing, Incoming"));
+    }
+
+    buzzer_ring_on();
+    call_incoming();
+    buzzer_ring_off();
+
+    /*  answer incoming calls with 200/OK only if pickup value has been changed to 1*/
+    pthread_mutex_lock(&pickup_call_mutex);
+    if(pickup_call==1){
+        pthread_mutex_unlock(&pickup_call_mutex);
+        pjsua_call_answer(call_id, 200, NULL, NULL);
+        return;
+    }
+    pthread_mutex_unlock(&pickup_call_mutex);
+    pjsua_call_answer(call_id, PJSIP_SC_BUSY_HERE, NULL, NULL);
 }
 
 /* Callback called by the library when call's state has changed */
@@ -121,13 +189,46 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
             pthread_mutex_lock(&call_mutex);
             current_call=PJSUA_INVALID_ID;
             pthread_mutex_unlock(&call_mutex);
-            PJ_LOG(3,(THIS_FILE, "free to make and accept calls"));
+
+            pthread_mutex_lock(&pickup_call_mutex);
+            pickup_call=0;
+            pthread_mutex_unlock(&pickup_call_mutex);
+
+            pthread_mutex_lock(&status_call_mutex);
+            status_call=0;
+            pthread_mutex_unlock(&status_call_mutex);
+
+            PJ_LOG(3,(THIS_FILE, "free to make and accept calls, no call in session"));
         }
+
+    
+        //icoming call is ancknowleged and pickup varibale is reset
+        //this pick value is only modified once since only one call can be in session;
+        if(ci.state == PJSIP_INV_STATE_CONFIRMED){
+
+            pthread_mutex_lock(&status_call_mutex);
+            status_call=2;
+            pthread_mutex_unlock(&status_call_mutex);
+
+            PJ_LOG(3,(THIS_FILE, "Call in session"));
+        }
+
+
+       
+                
+                
 
         
     }
-        
 
+    if(ci.state == PJSIP_INV_STATE_CALLING){
+
+        pthread_mutex_lock(&status_call_mutex);
+        status_call=3;
+        pthread_mutex_unlock(&status_call_mutex);
+
+        PJ_LOG(3,(THIS_FILE, "Outgoing call, Outgoing"));
+    }
 }
 
 /* Callback called by the library when call's media state has changed 
@@ -185,6 +286,48 @@ int pjsua_interface_make_call(char *str){
 
 
 }
+
+
+int pjsua_interface_hang_up_call(){
+
+
+    pjsua_call_hangup_all();
+   
+    return 1;
+}
+
+
+int pjsua_interface_get_status_call(){
+
+    int getStatus=0;
+    pthread_mutex_lock(&status_call_mutex);
+    getStatus=status_call;
+    pthread_mutex_unlock(&status_call_mutex);
+    switch (getStatus)
+    {
+    case 0:
+        PJ_LOG(3,(THIS_FILE, "none,free to call ,no status to report"));
+        break;
+    case 1:
+
+        PJ_LOG(3,(THIS_FILE, "incoming call, ringing"));
+        break;
+    case 2:
+        PJ_LOG(3,(THIS_FILE, "call in session"));
+        break;
+    case 3:
+        PJ_LOG(3,(THIS_FILE, "outgoing call"));
+        break;
+
+    default:
+        break;
+    }
+
+    return getStatus;
+   
+}
+
+
 
 static int pjsua_thread(void){
 
@@ -282,7 +425,7 @@ static int pjsua_thread(void){
     for (;;) {
         char option[10];
 
-        puts("Press 'h' to hangup all calls, 'q' to quit, c to call");
+        puts("Press 'h' to hangup all calls, 'q' to quit, c to call s to status p to pick d to decline");
         if (fgets(option, sizeof(option), stdin) == NULL) {
             puts("EOF while reading stdin, will quit now..");
             break;
@@ -293,6 +436,15 @@ static int pjsua_thread(void){
 
         if (option[0] == 'h')
             pjsua_call_hangup_all();
+
+        if (option[0] == 's')
+            pjsua_interface_get_status_call();
+
+        if (option[0] == 'p')
+            pjsua_interface_pickup_incoming_call(1);
+        
+        if (option[0] == 'd')
+            pjsua_interface_pickup_incoming_call(2);
             
         if (option[0]== 'c') {
             //pjsua_conf_adjust_tx_level(0, 0.01);
@@ -323,7 +475,10 @@ int pjsua_interface_init(pthread_cond_t * cond, pthread_mutex_t * lock){
 
     shutdownRequest = cond;
     shutdownLock = lock;
+    pickup_call=0;
+    status_call=0;
     pthread_mutex_init(&call_mutex, NULL);
+    pthread_mutex_init(&pickup_call_mutex, NULL);
     if(pthread_create(&pjsuaThreadPID, NULL, (void*)&pjsua_thread, NULL) != 0){
         perror("Error in creating ");
         sendShutdownRequest();
@@ -336,6 +491,7 @@ int pjsua_interface_init(pthread_cond_t * cond, pthread_mutex_t * lock){
 int pjsua_interface_cleanup(void){
     
     pthread_mutex_destroy(&call_mutex);
+    pthread_mutex_destroy(&pickup_call_mutex);
     if(pthread_join(pjsuaThreadPID, NULL) != 0){
         perror("Error in joining the phsua thread.");
     }

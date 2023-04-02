@@ -24,13 +24,27 @@ int pjsua_interface_init(pthread_cond_t * cond, pthread_mutex_t * lock);
 int pjsua_interface_make_call(char *str);
 // return succes or failure 
 
+//pass 1 to pick up call and pass 2 to decline call
+int pjsua_interface_pickup_incoming_call(int ack);
+
 
 //hang up active call fuction make it safe if no call in session return false
+int pjsua_interface_hang_up_call(void);
+
+
+//0=no call in session , 1 = in comming call ringing, 2= call in session 
+int pjsua_interface_get_status_call(void);
+
+
+//link wiht potionmeter
 
 
 //add mic ampilier fucntions
 
 //add output volume control fucntion  
+
+
+//automatic acount based on ip found on the interface
 
 
 //Cleanup. Returns -1 if there were any issues closing.
