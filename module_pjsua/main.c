@@ -1,6 +1,6 @@
 /**
- * Entrypoint for the IP Phone app
- * By Ryan Tio & Nhi Mai-Do, modified from assignment 3 code
+ * Sanseerat virk
+ * starting point to run just the pjsua module
 */
 #include <stdio.h>
 #include <stdlib.h>
