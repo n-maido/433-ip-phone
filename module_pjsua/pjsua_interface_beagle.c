@@ -65,8 +65,8 @@ static int pickup_call;
 static pthread_mutex_t status_call_mutex;
 static int status_call;
 
-static pjsua_acc_id acc_id;
-static pjsua_acc_id acc_id2;
+static pjsua_acc_id linphone_account_id;
+static pjsua_acc_id network_account_id;
 
 
 
@@ -269,7 +269,7 @@ int pjsua_interface_make_call(char *str){
     }
     //pj_str_t uri = pj_str("sip:san@192.168.26.128");
     pj_str_t uri = pj_str(str);
-    status = pjsua_call_make_call(acc_id, &uri, 0, NULL, NULL, &current_call);
+    status = pjsua_call_make_call(linphone_account_id, &uri, 0, NULL, NULL, &current_call);
     
     if (status != PJ_SUCCESS){
 
@@ -383,13 +383,13 @@ static int pjsua_thread(void){
     pjsua_acc_config acc_cfg;
     pjsua_acc_config_default(&acc_cfg);
     acc_cfg.id = pj_str("sip:" SIP_USER "@" SIP_DOMAIN);
-    status = pjsua_acc_add(&acc_cfg, PJ_TRUE, &acc_id);
+    status = pjsua_acc_add(&acc_cfg, PJ_TRUE, &linphone_account_id);
     if (status != PJ_SUCCESS)  error_exit("Error first account", status);
 
     pjsua_acc_config acc_cfg2;
     pjsua_acc_config_default(&acc_cfg2);
     acc_cfg.id = pj_str("sip:ryan@192.168.1.207");
-    status = pjsua_acc_add(&acc_cfg, PJ_TRUE, &acc_id2);
+    status = pjsua_acc_add(&acc_cfg, PJ_TRUE, &network_account_id);
     if (status != PJ_SUCCESS)  error_exit("Error second account", status);
 
     /* Register to SIP server by creating SIP account. */
@@ -465,7 +465,7 @@ static int pjsua_thread(void){
             
             pj_str_t uri = pj_str("sip:debian1@192.168.1.129");
 
-            status = pjsua_call_make_call(acc_id2, &uri, 0, NULL, NULL, NULL);
+            status = pjsua_call_make_call(network_account_id, &uri, 0, NULL, NULL, NULL);
             if (status != PJ_SUCCESS) error_exit("Error making call", status);
         //     if(pjsua_interface_make_call("sip:san@192.168.26.128")){
 

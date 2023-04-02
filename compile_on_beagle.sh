@@ -1,2 +1,0 @@
-mv Makefile Makefile_host
-mv Makefile_beagle Makefile
