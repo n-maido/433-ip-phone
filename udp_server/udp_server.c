@@ -10,6 +10,7 @@
 #include <pthread.h>
 
 #include "udp_server.h"
+#include "../module_pjsua/pjsua_interface.h"
 
 #define PORT 11037
 //predefined length in assignment spec for UDP packet
@@ -80,30 +81,32 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
     if(!strncmp(msg, optionValues[CALL_STATUS], strlen(optionValues[CALL_STATUS]))){
         // TODO: get call status from Call module
         // 0 = none, 1 = incoming, 2 = ongoing, 3 = error
-        int status = 0;
+        // int status = 0;
+        int status = pjsua_interface_get_status_call();
         char* address = "sip@sip:123.123.12.1";
 
         // if ongoing call, get the current volume and mic gain level
         switch (status) {
-            case 0:
+            case 0: // no call
                 snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d}}\n", status);
                 break;
-            case 1:
+            case 1: // incoming call
                 snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\"}}\n", status, address);
                 break;
-            case 2: 
+            case 2:  // call in session, outgoing call
+            case 3:
             {
                 int vol = 50;
                 int gain = 10;
                 snprintf(r, 150, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\", \"vol\": %d, \"gain\": %d}}\n", status, address, vol, gain);
                 break;
             }
-            case 3:
-            {
-                char* error = "Error";
-                snprintf(r, 150, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"error\": \"%s\"}}\n", status, error);
-                break;
-            }
+            // case 3: // outgoing call
+            // {
+            //     char* error = "Error";
+            //     snprintf(r, 150, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"error\": \"%s\"}}\n", status, error);
+            //     break;
+            // }
             default:
                 snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d}}\n", status);
         }

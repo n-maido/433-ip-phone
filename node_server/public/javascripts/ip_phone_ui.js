@@ -15,7 +15,8 @@ const Status = {
 	None: 0,
 	Incoming: 1,
 	Ongoing: 2,
-	Error: 3
+	Outgoing: 3,
+	Error: 4
 }
 
 var successToast = Toastify({
@@ -269,6 +270,7 @@ function call_status(){
 				setStatusBox(Status.Incoming, result);
 				break;
 			case Status.Ongoing:
+			case Status.Outgoing:
 				callInProgress = true;
 				setStatusBox(Status.Ongoing, result);
 				break;
