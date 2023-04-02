@@ -288,6 +288,39 @@ int pjsua_interface_make_call(char *str){
 }
 
 
+
+int pjsua_interface_make_callO1(char *str){
+
+    pthread_mutex_lock(&call_mutex);
+    if(current_call!=PJSUA_INVALID_ID)	{
+        pthread_mutex_unlock(&call_mutex);
+        return 0;
+    }
+    //pj_str_t uri = pj_str("sip:san@192.168.26.128");
+    pj_str_t uri = pj_str(str);
+    status = pjsua_call_make_call(acc_id2, &uri, 0, NULL, NULL, &current_call);
+    
+    if (status != PJ_SUCCESS){
+
+        PJ_LOG(3,(THIS_FILE, "make call uncsuccesful sip uri may be invalid call id: %d",current_call));
+        current_call=PJSUA_INVALID_ID;
+        pthread_mutex_unlock(&call_mutex);
+        return 0;
+
+    }else{
+
+        PJ_LOG(3,(THIS_FILE, "make call succesful call id: %d",current_call));
+        pthread_mutex_unlock(&call_mutex);
+    }
+
+    return 1;
+
+
+}
+
+
+
+
 int pjsua_interface_hang_up_call(){
 
 
@@ -386,8 +419,8 @@ static int pjsua_thread(void){
 
     pjsua_acc_config acc_cfg2;
     pjsua_acc_config_default(&acc_cfg2);
-    acc_cfg.id = pj_str("sip:" SIP_USER1 "@192.168.1.129");
-    status = pjsua_acc_add(&acc_cfg, PJ_TRUE, &acc_id2);
+    acc_cfg2.id = pj_str("sip:" SIP_USER1 "@192.168.1.129");
+    status = pjsua_acc_add(&acc_cfg2, PJ_TRUE, &acc_id2);
     if (status != PJ_SUCCESS)  error_exit("Error second account", status);
 
     /* Register to SIP server by creating SIP account. */
@@ -462,10 +495,17 @@ static int pjsua_thread(void){
 
         if (option[0]== 'x') {
             
-            pj_str_t uri = pj_str("sip:ryan@192.168.1.207");
+            // pj_str_t uri = pj_str("sip:ryan@192.168.1.207");
 
-            status = pjsua_call_make_call(acc_id2, &uri, 0, NULL, NULL, NULL);
-            if (status != PJ_SUCCESS) error_exit("Error making call", status);
+            // status = pjsua_call_make_call(acc_id2, &uri, 0, NULL, NULL, NULL);
+            // if (status != PJ_SUCCESS) error_exit("Error making call", status);
+
+            if(pjsua_interface_make_callO1("sip:ryan@192.168.1.207")){
+
+                 PJ_LOG(3,(THIS_FILE, "make call succesful, call is active"));
+            }else{
+                 PJ_LOG(3,(THIS_FILE, "make call unsuccesful, call in progress or invalid uri"));
+            }
      
         }
             //make call
