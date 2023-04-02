@@ -27,7 +27,8 @@ var server = http.createServer(function(request, response) {
 		serveStatic(response, absPath);
 	} else if (request.url === '/saveContact') {
 		saveContact(request, response);
-		// return;
+	} else if (request.url === '/deleteContact') {
+		deleteContact(request, response);
 	} else {
 		filePath = 'public' + request.url;
 		var absPath = './' + filePath;
@@ -87,6 +88,23 @@ function saveContact(request, response) {
 		fs.writeFileSync(contactsPath, JSON.stringify(contacts), 'utf-8');
 		response.end();
 
+	});
+	response.end();
+}
+
+function deleteContact(request, response) {
+	console.log("delete endpt reached");
+	let contactsPath = './public/data/contacts.json';
+	request.on('data', async function(data) { 
+		console.log("received data: " + data);
+		let address = JSON.parse(data);
+
+		let contactsJSON = fs.readFileSync(contactsPath, 'utf-8');
+		let contacts = JSON.parse(contactsJSON);
+		contacts = contacts.filter(elem=>elem.sipAddress!==address)
+
+		fs.writeFileSync(contactsPath, JSON.stringify(contacts), 'utf-8');
+		response.end();
 	});
 	response.end();
 }

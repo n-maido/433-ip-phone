@@ -65,7 +65,7 @@ $(document).ready(function() {
 
 		// validate sip uri format
 		if (!validateSIP(callee)) {
-			window.alert(`Invalid SIP URI format.\nPlease enter a URI in the format"sip:user@host:optional_port"\nwhere "host" is an IP address or domain`);
+			window.alert("Invalid SIP URI format.\nPlease enter a URI in the format\"sip:user@host:optional_port\"\nwhere \"host\" is an IP address or domain");
 			return;
 		}
 		makeCall(callee);
@@ -93,13 +93,13 @@ $(document).ready(function() {
 	$('#incomingHangUpBtn').click(function() {
 		// do we need to supply addresses to hang up a call?
 		// remove if not needed
-		var calleeText = $('#incomingText').text().split(" ");
-		console.log(`calleeText = ${calleeText}`);
-		var callee = calleeText[3];
+		// var calleeText = $('#incomingText').text().split(" ");
+		// console.log(`calleeText = ${calleeText}`);
+		// var callee = calleeText[3];
 
-		sendCommandViaUDP(`end_call=${callee}`); //should we use end_call or have a new cmd reject call?
+		sendCommandViaUDP(`pick_up 2`); //should we use end_call or have a new cmd reject call?
 
-		socket.on('end_call', function(result) {
+		socket.on('pick_up', function(result) {
 			if (result.toLowerCase() === "error") {
 				callInProgress = true;
 				setStatusBox(Status.Error, result);
@@ -111,11 +111,11 @@ $(document).ready(function() {
 	$('#incomingPickUpBtn').click(function() {
 		// do we need to supply addresses to hang up a call?
 		// remove if not needed
-		var calleeText = $('#incomingText').text().split(" ");
-		console.log(`calleeText = ${calleeText}`);
-		var callee = calleeText[3];
+		// var calleeText = $('#incomingText').text().split(" ");
+		// console.log(`calleeText = ${calleeText}`);
+		// var callee = calleeText[3];
 
-		sendCommandViaUDP(`pick_up=${callee}`); //should we use end_call or have a new cmd reject call?
+		sendCommandViaUDP(`pick_up 1`); //should we use end_call or have a new cmd reject call?
 
 		socket.on('pick_up', function(result) {
 			console.log(result);
@@ -128,7 +128,6 @@ $(document).ready(function() {
 
 
 	// Call a saved contact
-	// $("#contactsTable .tableCallBtn").click(function() {
 	$('#contactsTable').on('click', '.tableCallBtn', function() {
 		console.log("contact clicked");
 		// get the row
@@ -158,6 +157,12 @@ $(document).ready(function() {
 			return;
 		}
 
+		// check if the same sip address exists
+		if (array.includes(array.find(elem=>elem.sipAddress === address))) {
+			window.alert("A contact with this sip address already exists.");
+			return;
+		}
+
 		let contact = {
 			name: name,
 			sipAddress: address
@@ -182,6 +187,33 @@ $(document).ready(function() {
 			console.log('Successfully saved contact to file');
 			console.log(response);
 		}, 'json');
+	});
+
+	// Delete contact
+	$('#contactsTable').on('click', '.tableDeleteBtn', function() {
+		console.log("contact delete clicked");
+		// get the row
+		var row = $(this).closest("tr");
+
+		// address is the 2nd td in the row
+		var address = row.find("td:nth-child(2)").text(); 
+
+		sendCommandViaUDP(`delete_contact=${address}`)
+		socket.on('delete_contact', function(result) {
+			if (result.toLowerCase() !== 'success') {
+				console.log(result);
+			}
+		});
+
+		$.post('/deleteContact', address, function(response) {
+			console.log('Successfully deleted contact to file');
+			console.log(response);
+		}, 'text');
+
+		// remove from array and table
+		savedContacts = savedContacts.filter(elem=>elem.sipAddress!==address)
+		
+		row.remove();
 	});
 
 	// Volume control
@@ -344,6 +376,7 @@ function makeCall(callee) {
 		console.log(result);
 		if (result.toLowerCase() === "error") {
 			callInProgress = false;
+			// TODO: set status box to none and show error toast instead?
 			setStatusBox(Status.Error, result);
 		} 	
 	});
@@ -415,6 +448,9 @@ function appendContact(name, address) {
 		<td>${address}</td>
 		<td>
 			<input type="button" class="tableCallBtn" value="Call">
+		</td>
+		<td>
+			<input type="button" class="tableDeleteBtn" value="Delete">
 		</td>
 	</tr>`
 

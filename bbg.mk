@@ -4,12 +4,12 @@
 
 #pjsua dependencies 
 
-PJDIR = /mnt/remote/pjsip-apps/pjproject-2.13
+PJDIR = /mnt/remote/pjproject-2.13
 include $(PJDIR)/build.mak
 
 # Edit this file to compile extra C files into their own programs.
 TARGET= ip_phone
-SOURCES= main.c udp_server/udp_server.c utils/utils.c module_pjsua/pjsua_interface.c module_pjsua/pjsua_interface.h dependencies/utils/util.c 
+SOURCES= main.c udp_server/udp_server.c utils/utils.c module_pjsua/pjsua_interface.c module_pjsua/pjsua_interface.h dependencies/utils/util.c dependencies/buzzer/buzzer.c
 
 # PUBDIR = $(HOME)/cmpt433/public/myApps
 OUTDIR = /mnt/remote/

@@ -70,6 +70,12 @@ function handleCommand(socket) {
 				case "new_user":
 					socket.emit('new_user', reply.content);
 					break;
+				case "add_contact":
+					socket.emit('add_contact', reply.content);
+					break;
+				case "delete_contact":
+					socket.emit('delete_contact', reply.content);
+					break;
 				case "call_status":
 					socket.emit('call_status', reply.content);
 					break;

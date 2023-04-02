@@ -32,7 +32,7 @@ int pjsua_interface_pickup_incoming_call(int ack);
 int pjsua_interface_hang_up_call(void);
 
 
-//0=no call in session , 1 = incoming call ringing, 2= call in session, 3=outgoing call 3=ongoing call
+//0=no call in session , 1 = incoming call ringing, 2= call in session, 3=outgoing call
 int pjsua_interface_get_status_call(void);
 
 
