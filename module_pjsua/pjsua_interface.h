@@ -44,8 +44,12 @@ int pjsua_interface_get_status_call(void);
 
 //add mic amplifier functions
 
-//add output volume control fucntion  
 
+
+//add output volume control fucntion 0 to 100
+void pjsua_interface_set_volume(int volume);
+
+int pjsua_interface_get_volume();
 
 //automatic acount based on ip found on the interface
 
