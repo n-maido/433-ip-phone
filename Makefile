@@ -31,4 +31,4 @@ clean:
 node:
 	mkdir -p $(PUBDIR)/ip_phone_node_copy/ 
 	cp -R node_server/* $(PUBDIR)/ip_phone_node_copy/ 
-	cd $(PUBDIR)/ip_phone_node_copy/ && npm install
+# cd $(PUBDIR)/ip_phone_node_copy/ && npm install

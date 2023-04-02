@@ -61,7 +61,8 @@
 		<form>
 			<p>
 				<h2>Make a call</h2>
-				<input type="text" id="sipInput" placeholder="Enter a SIP address">
+				<label for="sipInput">SIP Address</label>
+				<input type="text" id="sipInput" placeholder="sip:user@123.123.1.12" required>
 				<input type="button" id="callBtn" value="Call">
 			</p>
 		</form>
@@ -84,9 +85,9 @@
 			<p>
 				<h3>Add a contact</h3>
 				<label for="contactNameInput">Name</label>
-				<input type="text" id="contactNameInput" placeholder="Name">
+				<input type="text" id="contactNameInput" placeholder="Name" required>
 				<label for="contactAddressInput">SIP Address</label>
-				<input type="text" id="contactAddressInput" placeholder="sip:user@123.123.1.12">
+				<input type="text" id="contactAddressInput" placeholder="sip:user@123.123.1.12" required>
 				<input type="button" id="addContactBtn" value="Add">
 			</p>
 		</form>

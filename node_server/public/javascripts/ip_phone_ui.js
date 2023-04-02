@@ -56,6 +56,17 @@ $(document).ready(function() {
 	// Call a sip address
 	$('#callBtn').click(function(){
 		var callee = $('#sipInput').val();
+
+		if (callee === '') {
+			window.alert("Please fill out the SIP address before proceeding");
+			return;
+		}
+
+		// validate sip uri format
+		if (!validateSIP(callee)) {
+			window.alert(`Invalid SIP URI format.\nPlease enter a URI in the format"sip:user@host:optional_port"\nwhere "host" is an IP address or domain`);
+			return;
+		}
 		makeCall(callee);
 	});
 
@@ -132,6 +143,20 @@ $(document).ready(function() {
 	$('#addContactBtn').click(function(){
 		let name = $('#contactNameInput').val();
 		let address = $('#contactAddressInput').val();
+
+		if (name === '' || address === '') {
+			window.alert("Please fill out all fields before proceeding");
+			return;
+		}
+
+		// validate sip uri format
+		if (!validateSIP(address)) {
+			window.alert(`Invalid SIP URI format.
+			Please enter a URI in the format "sip:user@host:optional_port"
+			where "host" is an IP address or domain`);
+			return;
+		}
+
 		let contact = {
 			name: name,
 			sipAddress: address
@@ -310,6 +335,7 @@ function makeCall(callee) {
 		window.alert("There is call in progress. Please hang up and try again.");
 		return;
 	}
+
 	sendCommandViaUDP(`make_call=${callee}`);
 
 	socket.on('make_call', function(result) {
@@ -319,6 +345,17 @@ function makeCall(callee) {
 			setStatusBox(Status.Error, result);
 		} 	
 	});
+}
+
+/**
+ * Validates the SIP URI
+ * Should be in the format "sip:user@host:optional_port"
+ * host = IP address or domain
+ */
+function validateSIP(address) {
+	// regex pattern from: https://regex101.com/r/5OJJxF/1/ 
+	let sipREGEX = /^(sip?):([^@\n]+)(?:@(.+))?$/;
+	return sipREGEX.test(address);
 }
 
 function setStatusBox(status, data) {
