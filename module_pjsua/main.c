@@ -1,32 +1,31 @@
 /**
- * Entrypoint for the IP Phone app
- * By Ryan Tio & Nhi Mai-Do, modified from assignment 3 code
+ * Sanseerat virk
+ * starting point to run just the pjsua module
 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include "module_pjsua/pjsua_interface.h"
-#include "utils/utils.h"
-#include "udp_server/udp_server.h"
+#include "pjsua_interface.h"
+#include "../dependencies/buzzer/buzzer.h"
 
 static pthread_cond_t shutdownCondition = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t conditionMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_t shutdownPid = -1;
 
-static void shutdown(void);
+void shutdown_app(void);
 
 //prepare all of the modules.
 void init(void){
     //allow any of the modules to shutdown the program if it breaks.
-    udp_init(&shutdownCondition, &conditionMutex);
     pjsua_interface_init(&shutdownCondition, &conditionMutex);
+    buzzer_init();
     //display inint 
 }
 
 //shutdown all of the modules.
-static void shutdown(void){
-    udp_cleanup();
+void shutdown_app(void){
     pjsua_interface_cleanup();
+    buzzer_cleanup();
     //display clean up
 }
 
@@ -39,16 +38,20 @@ void waitForShutdown(void){
 }
 
 int main(){
+
+
     if(pthread_create(&shutdownPid, NULL, (void *)&waitForShutdown, NULL) != 0){
         perror("Error creating shutdown thread.");
         return -1;
     }
 
+
+
     init();
 
     pthread_join(shutdownPid, NULL);
     printf("Received shutdown request.\n");
-    shutdown();
+    shutdown_app();
 
     return 0;
 }
