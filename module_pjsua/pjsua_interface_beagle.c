@@ -388,7 +388,7 @@ static int pjsua_thread(void){
 
     pjsua_acc_config acc_cfg2;
     pjsua_acc_config_default(&acc_cfg2);
-    acc_cfg.id = pj_str("sip:debian@192.168.7.5");
+    acc_cfg.id = pj_str("sip:ryan@192.168.1.207");
     status = pjsua_acc_add(&acc_cfg, PJ_TRUE, &acc_id2);
     if (status != PJ_SUCCESS)  error_exit("Error second account", status);
 
@@ -463,7 +463,7 @@ static int pjsua_thread(void){
         }
          if (option[0]== 'x') {
             
-            pj_str_t uri = pj_str("sip:san@192.168.26.128");
+            pj_str_t uri = pj_str("sip:debian1@192.168.1.129");
 
             status = pjsua_call_make_call(acc_id2, &uri, 0, NULL, NULL, NULL);
             if (status != PJ_SUCCESS) error_exit("Error making call", status);
