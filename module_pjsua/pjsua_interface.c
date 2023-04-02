@@ -63,6 +63,10 @@ static int pickup_call;
 static pthread_mutex_t status_call_mutex;
 static int status_call;
 
+
+static pthread_mutex_t tx_volume_mutex;
+static int tx_volume;
+
 static pjsua_acc_id acc_id;
 static pjsua_acc_id acc_id2;
 
@@ -288,6 +292,39 @@ int pjsua_interface_make_call(char *str){
 }
 
 
+
+int pjsua_interface_make_callO1(char *str){
+
+    pthread_mutex_lock(&call_mutex);
+    if(current_call!=PJSUA_INVALID_ID)	{
+        pthread_mutex_unlock(&call_mutex);
+        return 0;
+    }
+    //pj_str_t uri = pj_str("sip:san@192.168.26.128");
+    pj_str_t uri = pj_str(str);
+    status = pjsua_call_make_call(acc_id2, &uri, 0, NULL, NULL, &current_call);
+    
+    if (status != PJ_SUCCESS){
+
+        PJ_LOG(3,(THIS_FILE, "make call uncsuccesful sip uri may be invalid call id: %d",current_call));
+        current_call=PJSUA_INVALID_ID;
+        pthread_mutex_unlock(&call_mutex);
+        return 0;
+
+    }else{
+
+        PJ_LOG(3,(THIS_FILE, "make call succesful call id: %d",current_call));
+        pthread_mutex_unlock(&call_mutex);
+    }
+
+    return 1;
+
+
+}
+
+
+
+
 int pjsua_interface_hang_up_call(){
 
 
@@ -296,6 +333,41 @@ int pjsua_interface_hang_up_call(){
     return 1;
 }
 
+void pjsua_interface_set_volume(int set_volume)
+{
+
+    float vol = 0;
+
+    if (set_volume < 0)
+    {
+
+        set_volume = 0;
+    }
+
+    if (set_volume > 100)
+    {
+
+        set_volume = 100;
+    }
+
+    vol = set_volume / 100;
+
+    pthread_mutex_lock(&tx_volume_mutex);
+    tx_volume = set_volume;
+    pjsua_conf_adjust_tx_level(0, vol);
+    pthread_mutex_lock(&tx_volume_mutex);
+}
+
+int pjsua_interface_get_volume(){
+
+    int curr_vol;
+
+    pthread_mutex_lock(&tx_volume_mutex);
+    curr_vol=tx_volume;
+    pthread_mutex_lock(&tx_volume_mutex);
+
+    return curr_vol;
+}
 
 int pjsua_interface_get_status_call(){
 
@@ -372,7 +444,8 @@ static int pjsua_thread(void){
     status = pjsua_set_snd_dev(9, 3);
 
     //volume ajustement tested works still dont understand the 0 
-    //pjsua_conf_adjust_tx_level(0, 5.0);
+    pjsua_conf_adjust_tx_level(0, 1.0);
+    tx_volume=1.0;
 
     if (status != PJ_SUCCESS) error_exit("Error adding sound device", status);
     /* Get the current input (microphone) volume */
@@ -386,8 +459,8 @@ static int pjsua_thread(void){
 
     pjsua_acc_config acc_cfg2;
     pjsua_acc_config_default(&acc_cfg2);
-    acc_cfg.id = pj_str("sip:" SIP_USER1 "@192.168.1.129");
-    status = pjsua_acc_add(&acc_cfg, PJ_TRUE, &acc_id2);
+    acc_cfg2.id = pj_str("sip:" SIP_USER1 "@192.168.1.129");
+    status = pjsua_acc_add(&acc_cfg2, PJ_TRUE, &acc_id2);
     if (status != PJ_SUCCESS)  error_exit("Error second account", status);
 
     /* Register to SIP server by creating SIP account. */
@@ -462,10 +535,17 @@ static int pjsua_thread(void){
 
         if (option[0]== 'x') {
             
-            pj_str_t uri = pj_str("sip:ryan@192.168.1.207");
+            // pj_str_t uri = pj_str("sip:ryan@192.168.1.207");
 
-            status = pjsua_call_make_call(acc_id2, &uri, 0, NULL, NULL, NULL);
-            if (status != PJ_SUCCESS) error_exit("Error making call", status);
+            // status = pjsua_call_make_call(acc_id2, &uri, 0, NULL, NULL, NULL);
+            // if (status != PJ_SUCCESS) error_exit("Error making call", status);
+
+            if(pjsua_interface_make_callO1("sip:ryan@192.168.1.207")){
+
+                 PJ_LOG(3,(THIS_FILE, "make call succesful, call is active"));
+            }else{
+                 PJ_LOG(3,(THIS_FILE, "make call unsuccesful, call in progress or invalid uri"));
+            }
      
         }
             //make call
