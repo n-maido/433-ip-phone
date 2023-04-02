@@ -32,8 +32,11 @@ int pjsua_interface_pickup_incoming_call(int ack);
 int pjsua_interface_hang_up_call(void);
 
 
-//0=no call in session , 1 = in comming call ringing, 2= call in session 
+//0=no call in session , 1 = in comming call ringing, 2= call in session 3=ongoing call
 int pjsua_interface_get_status_call(void);
+
+
+//if call in session or inocoming uri of incoming call
 
 
 //link wiht potionmeter

@@ -46,7 +46,7 @@
 
 #define SIP_DOMAIN	"192.168.7.2" //make this automatic look into sample app 
 #define SIP_USER	"debian"
-
+#define SIP_USER1	"debian1"
 
 static pthread_t pjsuaThreadPID = -1;
 static pthread_cond_t * shutdownRequest = NULL;
@@ -386,7 +386,7 @@ static int pjsua_thread(void){
 
     pjsua_acc_config acc_cfg2;
     pjsua_acc_config_default(&acc_cfg2);
-    acc_cfg.id = pj_str("sip:debian@192.168.7.5");
+    acc_cfg.id = pj_str("sip:" SIP_USER1 "@192.168.1.129");
     status = pjsua_acc_add(&acc_cfg, PJ_TRUE, &acc_id2);
     if (status != PJ_SUCCESS)  error_exit("Error second account", status);
 
@@ -458,6 +458,15 @@ static int pjsua_thread(void){
             }else{
                  PJ_LOG(3,(THIS_FILE, "make call unsuccesful, call in progress or invalid uri"));
             }
+        }
+
+        if (option[0]== 'x') {
+            
+            pj_str_t uri = pj_str("sip:ryan@192.168.1.207");
+
+            status = pjsua_call_make_call(acc_id2, &uri, 0, NULL, NULL, NULL);
+            if (status != PJ_SUCCESS) error_exit("Error making call", status);
+     
         }
             //make call
     }
