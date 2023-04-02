@@ -63,6 +63,10 @@ static int pickup_call;
 static pthread_mutex_t status_call_mutex;
 static int status_call;
 
+
+static pthread_mutex_t tx_volume_mutex;
+static int tx_volume;
+
 static pjsua_acc_id acc_id;
 static pjsua_acc_id acc_id2;
 
@@ -329,6 +333,41 @@ int pjsua_interface_hang_up_call(){
     return 1;
 }
 
+void pjsua_interface_set_volume(int set_volume)
+{
+
+    float vol = 0;
+
+    if (set_volume < 0)
+    {
+
+        set_volume = 0;
+    }
+
+    if (set_volume > 100)
+    {
+
+        set_volume = 100;
+    }
+
+    vol = set_volume / 100;
+
+    pthread_mutex_lock(&tx_volume_mutex);
+    tx_volume = set_volume;
+    pjsua_conf_adjust_tx_level(0, vol);
+    pthread_mutex_lock(&tx_volume_mutex);
+}
+
+int pjsua_interface_get_volume(){
+
+    int curr_vol;
+
+    pthread_mutex_lock(&tx_volume_mutex);
+    curr_vol=tx_volume;
+    pthread_mutex_lock(&tx_volume_mutex);
+
+    return curr_vol;
+}
 
 int pjsua_interface_get_status_call(){
 
@@ -405,7 +444,8 @@ static int pjsua_thread(void){
     status = pjsua_set_snd_dev(9, 3);
 
     //volume ajustement tested works still dont understand the 0 
-    //pjsua_conf_adjust_tx_level(0, 5.0);
+    pjsua_conf_adjust_tx_level(0, 1.0);
+    tx_volume=1.0;
 
     if (status != PJ_SUCCESS) error_exit("Error adding sound device", status);
     /* Get the current input (microphone) volume */
