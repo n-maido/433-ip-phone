@@ -7,6 +7,7 @@
 #include <time.h>
 #include <string.h>
 #include "gpio.h"
+#include "lcd.h"
 
 // nanosleep wrapper function - accepts seconds and nanoseconds to construct delay
 static void delayFor(int, int);
@@ -16,12 +17,6 @@ static void pulseEnable();
 static void write4Bits(uint8_t);
 // Write a char to the LCD
 static void writeChar(char);
-// Write a message to the LCD to line 1 and 2
-void writeMessage(char* msg1, char* msg2);
-// Clear the LCD
-void clearMessage();
-// Initialize the LCD
-void LCD_initialize();
 
 /*int main()
 {
