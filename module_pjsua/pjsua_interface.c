@@ -40,7 +40,7 @@
 #include <pthread.h>
 #include "pjsua_interface.h"
 #include <pjsua-lib/pjsua.h>
-#include "dependencies/LED/led.h"
+#include "../dependencies/LED/led.h"
 
 #define THIS_FILE	"pjsuaInterface"
 
