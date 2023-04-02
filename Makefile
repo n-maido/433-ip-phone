@@ -8,7 +8,7 @@ include $(PJDIR)/build.mak
 
 # Edit this file to compile extra C files into their own programs.
 TARGET= ip_phone
-SOURCES= main.c udp_server/udp_server.c utils/utils.c module_pjsua/pjsua_interface.c module_pjsua/pjsua_interface.h
+SOURCES= main.c udp_server/udp_server.c dependencies/utils/util.c module_pjsua/pjsua_interface.c dependencies/buzzer/buzzer.c
 
 PUBDIR = $(HOME)/cmpt433/public/myApps
 OUTDIR = $(PUBDIR)
@@ -39,3 +39,4 @@ node:
 	mkdir -p $(PUBDIR)/ip_phone_node_copy/ 
 	cp -R node_server/* $(PUBDIR)/ip_phone_node_copy/ 
 	cd $(PUBDIR)/ip_phone_node_copy/ && npm install
+	
