@@ -1,5 +1,6 @@
 /*
-    Pjsua interface
+    Pjsua interface for application
+    Sanseerat Virk
     Usage / cautions:
         -pthread must be added to the compiler flags. 
 
@@ -17,6 +18,40 @@
 
 //Set up pjsua and thread. Returns -1 upon failure.
 int pjsua_interface_init(pthread_cond_t * cond, pthread_mutex_t * lock);
+
+
+//make call fucntion given a formatted sip uri 
+// returns 0 on failure, 1 on success
+int pjsua_interface_make_call(char *str);
+
+//pass 1 to pick up call and pass 2 to decline call
+int pjsua_interface_pickup_incoming_call(int ack);
+
+
+//hang up active call fuction make it safe if no call in session return false
+int pjsua_interface_hang_up_call(void);
+
+
+//0=no call in session , 1 = incoming call ringing, 2= call in session, 3=outgoing call
+int pjsua_interface_get_status_call(void);
+
+
+//if call in session or inocoming uri of incoming call
+
+
+//link with potentiometer
+
+
+//add mic amplifier functions
+
+
+
+//add output volume control fucntion 0 to 100
+void pjsua_interface_set_volume(int volume);
+
+int pjsua_interface_get_volume();
+
+//automatic acount based on ip found on the interface
 
 
 //Cleanup. Returns -1 if there were any issues closing.

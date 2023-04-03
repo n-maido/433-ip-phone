@@ -9,6 +9,7 @@
 #include "utils/utils.h"
 #include "udp_server/udp_server.h"
 #include "dependencies/interface/interface.h"
+#include "dependencies/buzzer/buzzer.h"
 
 static pthread_cond_t shutdownCondition = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t conditionMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -22,6 +23,7 @@ void init(void){
     udp_init(&shutdownCondition, &conditionMutex);
     pjsua_interface_init(&shutdownCondition, &conditionMutex);
     IFace_initialize();
+    buzzer_init();
 }
 
 //shutdown all of the modules.
@@ -29,6 +31,7 @@ static void shutdown(void){
     udp_cleanup();
     pjsua_interface_cleanup();
     IFace_cleanup();
+    buzzer_cleanup();
 }
 
 //awaits a conditional variable, halting execution of the main thread until another thread signals.
