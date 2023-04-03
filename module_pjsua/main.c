@@ -7,6 +7,7 @@
 #include <pthread.h>
 #include "pjsua_interface.h"
 #include "../dependencies/buzzer/buzzer.h"
+#include "../dependencies/interface/interface.h"
 
 static pthread_cond_t shutdownCondition = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t conditionMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -19,14 +20,14 @@ void init(void){
     //allow any of the modules to shutdown the program if it breaks.
     pjsua_interface_init(&shutdownCondition, &conditionMutex);
     buzzer_init();
-    //display inint 
+    IFace_initialize();
 }
 
 //shutdown all of the modules.
 void shutdown_app(void){
     pjsua_interface_cleanup();
     buzzer_cleanup();
-    //display clean up
+    IFace_cleanup();
 }
 
 //awaits a conditional variable, halting execution of the main thread until another thread signals.
