@@ -12,6 +12,9 @@ void IFace_addUser(char* username, char* sip);
 //Remove a user from the interface
 void IFace_removeUser(char* sip);
 
+//Update the display in case of incoming call or such
+void IFace_updateStatus(int status, char* address);
+
 //remove thread, delete all users
 void IFace_cleanup();
 
