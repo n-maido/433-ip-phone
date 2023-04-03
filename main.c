@@ -8,6 +8,7 @@
 #include "module_pjsua/pjsua_interface.h"
 #include "utils/utils.h"
 #include "udp_server/udp_server.h"
+#include "dependencies/interface/interface.h"
 
 static pthread_cond_t shutdownCondition = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t conditionMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -20,14 +21,14 @@ void init(void){
     //allow any of the modules to shutdown the program if it breaks.
     udp_init(&shutdownCondition, &conditionMutex);
     pjsua_interface_init(&shutdownCondition, &conditionMutex);
-    //display inint 
+    IFace_initialize();
 }
 
 //shutdown all of the modules.
 static void shutdown(void){
     udp_cleanup();
     pjsua_interface_cleanup();
-    //display clean up
+    IFace_cleanup();
 }
 
 //awaits a conditional variable, halting execution of the main thread until another thread signals.

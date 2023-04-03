@@ -73,6 +73,31 @@ void IFace_addUser(char* username, char* sip){
     IFace_lastUser = newUser;
 }
 
+void IFace_removeUser(char* sip){
+    if (IFace_currentUser == NULL || IFace_lastUser == NULL) {
+        printf("\nERROR: INTERFACE NOT INITIALIZED!\n");
+        return;
+    }
+
+    struct IFace_user *userToDelete = IFace_lastUser;
+    while (strcmp(userToDelete->sip, sip) != 0) {
+        userToDelete = userToDelete->prev;
+    }
+
+    //Update screen if current user is displayed
+    if (strcmp(sip, IFace_currentUser->sip) == 0) {
+        IFace_currentUser = IFace_currentUser->prev;
+        LCD_writeMessage(IFace_currentUser->name, IFace_currentUser->sip);
+    }
+
+    userToDelete->next->prev = userToDelete->prev;
+    userToDelete->prev->next = userToDelete->next;
+
+    free(userToDelete->name);
+    free(userToDelete->sip);
+    free(userToDelete);
+}
+
 static void* IFace_runner(void* arg) {
     //main interface loop
     while(IFace_running){
@@ -98,8 +123,10 @@ static void* IFace_runner(void* arg) {
             //Start or End call
             case IN:
                 //TODO: CALL CALLING FUNCTION
-                printf("Calling/Ending call with user '%s' at %s\n", IFace_currentUser->name, IFace_currentUser->sip);
-                LCD_writeMessage("Calling...", IFace_currentUser->name);
+                if (IFace_currentUser->prev != NULL){
+                    printf("Calling/Ending call with user '%s' at %s\n", IFace_currentUser->name, IFace_currentUser->sip);
+                    LCD_writeMessage("Calling...", IFace_currentUser->name);
+                }
                 break;
             default:
             break;
