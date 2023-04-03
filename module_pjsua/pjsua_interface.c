@@ -573,12 +573,13 @@ int pjsua_interface_init(pthread_cond_t * cond, pthread_mutex_t * lock){
         sendShutdownRequest();
         return -1;
     }
-
+    LED_startUp();
     return 1;
 }
 
 int pjsua_interface_cleanup(void){
     
+    LED_cleanUp();
     pthread_mutex_destroy(&call_mutex);
     pthread_mutex_destroy(&pickup_call_mutex);
     if(pthread_join(pjsuaThreadPID, NULL) != 0){
