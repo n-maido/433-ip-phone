@@ -12,6 +12,7 @@
 
 #include "udp_server.h"
 #include "../module_pjsua/pjsua_interface.h"
+#include "../dependencies/interface/interface.h"
 
 #define PORT 11037
 //predefined length in assignment spec for UDP packet
@@ -87,6 +88,8 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         int status = pjsua_interface_get_status_call();
         char* address = "sip@sip:123.123.12.1";
 
+        IFace_updateStatus(status, address);
+
         // if ongoing call, get the current volume and mic gain level
         switch (status) {
             case 0: // no call
@@ -134,6 +137,7 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         char* sipAddress = strtok(NULL, "&");
 
         printf("new contact: %s, %s\n", name, sipAddress);
+        IFace_addUser(name, sipAddress);
 
         //TODO: call LCD_add_contact(name, sipAddress)
 
@@ -146,9 +150,9 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         char address[MAX_SIP_ADDRESS_SIZE] = "";
         extractString(msg, DELETE_CONTACT, address);
 
-        printf("new user joined: %s\n", address);
+        printf("Removing user: %s\n", address);
 
-        //TODO: call lcd delete_contact and check return
+        IFace_removeUser(address);
 
         strncpy(r, "{\"msgType\":\"delete_contact\", \"content\": \"Success\"}\n", 100);        
     } else if(!strncmp(msg, optionValues[MAKE_CALL], strlen(optionValues[MAKE_CALL]))){
@@ -161,7 +165,7 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         printf("starting call with address %s\n", calleeAddress);
 
         // TODO: call Call module's calling func and process return val.
-        bool success = pjsua_interface_make_call(calleeAddress); // placeholder, remove later
+        bool success = pjsua_interface_make_call(calleeAddress);
         if (!success){
             strncpy(r, "{\"msgType\":\"make_call\", \"content\": \"Error\"}\n", 100);
             return;

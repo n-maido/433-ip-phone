@@ -17,10 +17,10 @@
 
 enum JS_direction {
     NONE,
-    UP,
     DOWN,
-    LEFT,
+    UP,
     RIGHT,
+    LEFT,
     IN
 };
 
