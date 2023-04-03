@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <pthread.h>
+#include <pjsua-lib/pjsua.h>
 
 #include "udp_server.h"
 #include "../module_pjsua/pjsua_interface.h"
@@ -270,6 +271,18 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
 //returns -1 on failure, and will send out a shutdown request if it fails / receives a quit request.
 //can it shutdown 
 static int udp_receive_thread(void){
+    // TODO: Register the current thread with PJSIP
+    pj_thread_t *thread = pj_thread_this();
+    pj_thread_desc desc;
+    // pj_thread_get_desc(thread, &desc);
+    const char* name = pj_thread_get_name(thread);
+    pj_status_t status = pj_thread_register(name, desc, NULL);
+    if (status != PJ_SUCCESS) {
+        // Handle error
+        pjsua_destroy();
+        return 1;
+    }
+
     printf("Listening on UDP port 11037.\n");
     while(waitForMessages){
         // struct sockaddr_in sinRemote = {0};
