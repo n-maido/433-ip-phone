@@ -48,7 +48,7 @@
 
 #define SIP_DOMAIN	"192.168.7.2" //make this automatic look into sample app 
 #define SIP_USER	"debian"
-#define SIP_USER1	"debian1"
+
 
 static pthread_t pjsuaThreadPID = -1;
 static pthread_cond_t * shutdownRequest = NULL;
@@ -64,14 +64,6 @@ static int pickup_call;
 
 static pthread_mutex_t status_call_mutex;
 static int status_call;
-
-
-static pthread_mutex_t tx_volume_mutex;
-static int tx_volume;
-
-
-static pthread_mutex_t tx_volume_mutex;
-static int tx_volume;
 
 static pjsua_acc_id linphone_account_id;
 static pjsua_acc_id network_account_id;
@@ -268,35 +260,6 @@ static void error_exit(const char *title, pj_status_t status)
     exit(1);
 }
 
-int pjsua_interface_make_callO1(char *str){
-
-    pthread_mutex_lock(&call_mutex);
-    if(current_call!=PJSUA_INVALID_ID)    {
-        pthread_mutex_unlock(&call_mutex);
-        return 0;
-    }
-    //pj_str_t uri = pj_str("sip:san@192.168.26.128");
-    pj_str_t uri = pj_str(str);
-    status = pjsua_call_make_call(network_account_id, &uri, 0, NULL, NULL, &current_call);
-    
-    if (status != PJ_SUCCESS){
-
-        PJ_LOG(3,(THIS_FILE, "make call uncsuccesful sip uri may be invalid call id: %d",current_call));
-        current_call=PJSUA_INVALID_ID;
-        pthread_mutex_unlock(&call_mutex);
-        return 0;
-
-    }else{
-
-        PJ_LOG(3,(THIS_FILE, "make call succesful call id: %d",current_call));
-        pthread_mutex_unlock(&call_mutex);
-    }
-
-    return 1;
-
-
-}
-
 int pjsua_interface_make_call(char *str){
 
     pthread_mutex_lock(&call_mutex);
@@ -326,6 +289,7 @@ int pjsua_interface_make_call(char *str){
 
 }
 
+
 int pjsua_interface_hang_up_call(){
 
 
@@ -334,42 +298,6 @@ int pjsua_interface_hang_up_call(){
     return 1;
 }
 
-void pjsua_interface_set_volume(int set_volume)
-{
-
-    float vol = 0;
-
-    if (set_volume < 0)
-    {
-
-        set_volume = 0;
-    }
-
-    if (set_volume > 100)
-    {
-
-        set_volume = 100;
-    }
-
-    vol = set_volume / 100.0;
-
-    pthread_mutex_lock(&tx_volume_mutex);
-    tx_volume = set_volume;
-    PJ_LOG(3,(THIS_FILE, "volume changed to: %d -> %f",tx_volume,vol));
-    pjsua_conf_adjust_tx_level(0, vol);
-    pthread_mutex_unlock(&tx_volume_mutex);
-}
-
-int pjsua_interface_get_volume(){
-
-    int curr_vol;
-
-    pthread_mutex_lock(&tx_volume_mutex);
-    curr_vol=tx_volume;
-    pthread_mutex_unlock(&tx_volume_mutex);
-
-    return curr_vol;
-}
 
 int pjsua_interface_get_status_call(){
 
@@ -446,23 +374,22 @@ static int pjsua_thread(void){
     status = pjsua_set_snd_dev(9, 3);
 
     //volume ajustement tested works still dont understand the 0 
-    pjsua_conf_adjust_tx_level(0, 1.0);
-    tx_volume=100;
+    //pjsua_conf_adjust_tx_level(0, 5.0);
 
     if (status != PJ_SUCCESS) error_exit("Error adding sound device", status);
     /* Get the current input (microphone) volume */
   
     //register without sip server account
-    pjsua_acc_config linphone_config;
-    pjsua_acc_config_default(&linphone_config);
-    linphone_config.id = pj_str("sip:" SIP_USER "@" SIP_DOMAIN);
-    status = pjsua_acc_add(&linphone_config, PJ_TRUE, &linphone_account_id);
+    pjsua_acc_config acc_cfg;
+    pjsua_acc_config_default(&acc_cfg);
+    acc_cfg.id = pj_str("sip:" SIP_USER "@" SIP_DOMAIN);
+    status = pjsua_acc_add(&acc_cfg, PJ_TRUE, &linphone_account_id);
     if (status != PJ_SUCCESS)  error_exit("Error first account", status);
 
-    pjsua_acc_config network_account_config;
-    pjsua_acc_config_default(&network_account_config);
-    network_account_config.id = pj_str("sip:ryan@192.168.1.207");
-    status = pjsua_acc_add(&network_account_config, PJ_TRUE, &network_account_id);
+    pjsua_acc_config acc_cfg2;
+    pjsua_acc_config_default(&acc_cfg2);
+    acc_cfg.id = pj_str("sip:ryan@192.168.1.207");
+    status = pjsua_acc_add(&acc_cfg, PJ_TRUE, &network_account_id);
     if (status != PJ_SUCCESS)  error_exit("Error second account", status);
 
     /* Register to SIP server by creating SIP account. */
@@ -536,12 +463,10 @@ static int pjsua_thread(void){
         }
          if (option[0]== 'x') {
             
-            if(pjsua_interface_make_call("sip:debian1@192.168.1.129")){
+            pj_str_t uri = pj_str("sip:debian1@192.168.1.129");
 
-                 PJ_LOG(3,(THIS_FILE, "make call successful, call is active"));
-            }else{
-                 PJ_LOG(3,(THIS_FILE, "make call unsuccesful, call in progress or invalid uri"));
-            }
+            status = pjsua_call_make_call(network_account_id, &uri, 0, NULL, NULL, NULL);
+            if (status != PJ_SUCCESS) error_exit("Error making call", status);
         //     if(pjsua_interface_make_call("sip:san@192.168.26.128")){
 
         //          PJ_LOG(3,(THIS_FILE, "make call succesful, call is active"));
@@ -549,37 +474,6 @@ static int pjsua_thread(void){
         //          PJ_LOG(3,(THIS_FILE, "make call unsuccesful, call in progress or invalid uri"));
         //     }
         // }
-        }
-
-        if (option[0]== 'x') {
-            
-            // pj_str_t uri = pj_str("sip:ryan@192.168.1.207");
-
-            // status = pjsua_call_make_call(acc_id2, &uri, 0, NULL, NULL, NULL);
-            // if (status != PJ_SUCCESS) error_exit("Error making call", status);
-
-            if(pjsua_interface_make_callO1("sip:ryan@192.168.1.207")){
-
-                 PJ_LOG(3,(THIS_FILE, "make call succesful, call is active"));
-            }else{
-                 PJ_LOG(3,(THIS_FILE, "make call unsuccesful, call in progress or invalid uri"));
-            }
-     
-        }
-
-
-        if (option[0]== 'v') {
-            
-            if(pjsua_interface_get_volume()==100){
-
-                pjsua_interface_set_volume(50);
-
-            }else{
-
-                pjsua_interface_set_volume(100);
-            }
-
-           
         }
             //make call
     }
