@@ -4,7 +4,7 @@
 
 #pjsua dependencies 
 
-PJDIR = /mnt/remote/pjproject-2.13
+PJDIR = /mnt/remote/pjsip-apps/pjproject-2.13
 include $(PJDIR)/build.mak
 
 # Edit this file to compile extra C files into their own programs.
