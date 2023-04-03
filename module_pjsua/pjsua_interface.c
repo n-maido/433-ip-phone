@@ -534,23 +534,7 @@ static int pjsua_thread(void){
                  PJ_LOG(3,(THIS_FILE, "make call unsuccesful, call in progress or invalid uri"));
             }
         }
-         if (option[0]== 'x') {
-            
-            if(pjsua_interface_make_call("sip:debian1@192.168.1.129")){
-
-                 PJ_LOG(3,(THIS_FILE, "make call successful, call is active"));
-            }else{
-                 PJ_LOG(3,(THIS_FILE, "make call unsuccesful, call in progress or invalid uri"));
-            }
-        //     if(pjsua_interface_make_call("sip:san@192.168.26.128")){
-
-        //          PJ_LOG(3,(THIS_FILE, "make call succesful, call is active"));
-        //     }else{
-        //          PJ_LOG(3,(THIS_FILE, "make call unsuccesful, call in progress or invalid uri"));
-        //     }
-        // }
-        }
-
+     
         if (option[0]== 'x') {
             
             // pj_str_t uri = pj_str("sip:ryan@192.168.1.207");
