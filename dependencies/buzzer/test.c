@@ -7,8 +7,8 @@
 
 int main(void){
     buzzer_init();
-    buzzer_ring_on();
-    sleepMs(7000);
+    buzzer_ring(3);
+    sleepMs(6000);
     printf("Turning this off!\n");
     buzzer_ring_off();
     buzzer_cleanup();
