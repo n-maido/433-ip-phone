@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <pthread.h>
+#include <pjsua-lib/pjsua.h>
 
 //Linked list of users
 struct IFace_user {
@@ -136,6 +137,16 @@ void IFace_updateStatus(int status, char* address) {
 }
 
 static void* IFace_runner(void* arg) {
+    pj_thread_t *thread = pj_thread_this();
+    pj_thread_desc desc;
+    pj_thread_get_desc(thread, &desc);
+    status = pj_thread_register(desc.name, NULL);
+    if (status != PJ_SUCCESS) {
+        // Handle error
+        pjsua_destroy();
+        return 1;
+    }
+    
     //main interface loop
     while(IFace_running){
         enum JS_direction input = JS_read();
