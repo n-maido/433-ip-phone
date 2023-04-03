@@ -10,6 +10,7 @@
 #include <pthread.h>
 
 #include "udp_server.h"
+#include "../module_pjsua/pjsua_interface.h"
 
 #define PORT 11037
 //predefined length in assignment spec for UDP packet
@@ -28,15 +29,20 @@ static pthread_cond_t * shutdownRequest = NULL;
 static pthread_mutex_t * shutdownLock = NULL;
 
 typedef enum {
-    GET_CALL_STATS = 0,
+    CALL_STATUS = 0,
     NEW_USER,
+    ADD_CONTACT,
+    DELETE_CONTACT,
     MAKE_CALL,
     END_CALL,
+    PICK_UP,
+    SET_VOLUME,
+    SET_GAIN,
     STOP,
     OPTIONS_MAX_COUNT
 } UDP_OPTIONS;
 
-const char optionValues[OPTIONS_MAX_COUNT][24] = {"get_call_stats", "new_user=", "make_call=", "end_call=", "stop"};
+const char optionValues[OPTIONS_MAX_COUNT][24] = {"call_status", "new_user=", "add_contact=", "delete_contact=", "make_call=", "end_call=", "pick_up", "set_volume", "set_gain", "stop"};
 
 static inline void toLowerString(char * s){
     for(int i = 0; i < strlen(s); ++i){
@@ -73,8 +79,39 @@ static void extractString(char* msg, UDP_OPTIONS option, char sipAddress[MAX_SIP
 static void processReply(char * msg, const unsigned int msgLen, char * r){
     toLowerString(msg);
     //need to check if enter has been pressed.
-    if(!strncmp(msg, optionValues[GET_CALL_STATS], strlen(optionValues[GET_CALL_STATS]))){
-        snprintf(r, 100, "{\"msgType\":\"call_stats\",\"content\":{}}\n");
+    if(!strncmp(msg, optionValues[CALL_STATUS], strlen(optionValues[CALL_STATUS]))){
+        // TODO: get call status from Call module
+        // 0 = none, 1 = incoming, 2 = ongoing, 3 = error
+        // int status = 0;
+        int status = pjsua_interface_get_status_call();
+        char* address = "sip@sip:123.123.12.1";
+
+        // if ongoing call, get the current volume and mic gain level
+        switch (status) {
+            case 0: // no call
+                snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d}}\n", status);
+                break;
+            case 1: // incoming call
+                snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\"}}\n", status, address);
+                break;
+            case 2:  // call in session, outgoing call
+            case 3:
+            {
+                int vol = 50;
+                int gain = 10;
+                //TODO: get cur address
+                snprintf(r, 150, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\", \"vol\": %d, \"gain\": %d}}\n", status, address, vol, gain);
+                break;
+            }
+            // case 3: // outgoing call
+            // {
+            //     char* error = "Error";
+            //     snprintf(r, 150, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"error\": \"%s\"}}\n", status, error);
+            //     break;
+            // }
+            default:
+                snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d}}\n", status);
+        }
         return;
     } else if(!strncmp(msg, optionValues[NEW_USER], strlen(optionValues[NEW_USER]))){
         // expects a msg of the format "new_user=<username>"
@@ -86,6 +123,33 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
 
         //TODO: return their sip address?
         strncpy(r, "{\"msgType\":\"new_user\", \"content\": \"Success\"}\n", 100);        
+    } else if(!strncmp(msg, optionValues[ADD_CONTACT], strlen(optionValues[ADD_CONTACT]))){
+        // expects a msg of the format "add_contact=<name>&<sipAddress>"
+        // parse contact
+        char contact[MAX_SIP_ADDRESS_SIZE] = "";
+        extractString(msg, ADD_CONTACT, contact);
+
+        char* name = strtok(contact, "&");
+        char* sipAddress = strtok(NULL, "&");
+
+        printf("new contact: %s, %s\n", name, sipAddress);
+
+        //TODO: call LCD_add_contact(name, sipAddress)
+
+        //TODO: return their sip address?
+        strncpy(r, "{\"msgType\":\"add_contact\", \"content\": \"Success\"}\n", 100);
+
+    } else if(!strncmp(msg, optionValues[DELETE_CONTACT], strlen(optionValues[DELETE_CONTACT]))){
+        // expects a msg of the format "delete_contact=<address>"
+        // parse username
+        char address[MAX_SIP_ADDRESS_SIZE] = "";
+        extractString(msg, DELETE_CONTACT, address);
+
+        printf("new user joined: %s\n", address);
+
+        //TODO: call lcd delete_contact and check return
+
+        strncpy(r, "{\"msgType\":\"delete_contact\", \"content\": \"Success\"}\n", 100);        
     } else if(!strncmp(msg, optionValues[MAKE_CALL], strlen(optionValues[MAKE_CALL]))){
         // expects a msg of the format "make_call=<sip address>"
 
@@ -96,14 +160,12 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         printf("starting call with address %s\n", calleeAddress);
 
         // TODO: call Call module's calling func and process return val.
-        // if successful, notify the lcd module that a call is in progress
-        bool validAdress = true; // placeholder, remove later
-        if (!validAdress){
-            strncpy(r, "{\"msgType\":\"make_call\", \"content\": \"Error: Invalid SIP address.\"}\n", 100);
+        bool success = pjsua_interface_make_call(calleeAddress); // placeholder, remove later
+        if (!success){
+            strncpy(r, "{\"msgType\":\"make_call\", \"content\": \"Error\"}\n", 100);
             return;
         }else{
-            // TODO: start call
-            snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"make_call\", \"content\": \"Success: Starting call to %s\"}\n", calleeAddress);
+            snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"make_call\", \"content\": \"Success\"}");
         }
     } else if (!strncmp(msg, optionValues[END_CALL], strlen(optionValues[END_CALL]))){
         // expects a msg of the format "end_call=<sip address>"
@@ -114,19 +176,82 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         extractString(msg, END_CALL, calleeAddress);
 
         printf("ending call with address %s\n", calleeAddress);
-        // TODO: call Call module's end call func and process return val.
-        // if successful, notify the lcd module that the call has ended
+        int success = pjsua_interface_hang_up_call();
 
-        // TODO: check if valid sip address?
-        bool validAdress = true; // placeholder, remove later
-        if (!validAdress){
-            strncpy(r, "{\"msgType\":\"end_call\", \"content\": \"Error: Invalid SIP address.\"}\n", 100);
-            return;
-        }else{
-            // TODO: end call
+        if (success){
             snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"end_call\", \"content\": \"Success: Ending call with %s\"}\n", calleeAddress);
+        } else {
+            strncpy(r, "{\"msgType\":\"end_call\", \"content\": \"Error: Invalid SIP address.\"}\n", 100);
         }
+        return;
        
+    } else if (!strncmp(msg, optionValues[PICK_UP], strlen(optionValues[PICK_UP]))){
+        // expects a msg of the format "pick_up n"
+        // 1 = pick up, 2 = decline
+        // if we don't need an address to end a call, then delete this section
+
+        // parse param
+        // char pickUp[MAX_SIP_ADDRESS_SIZE] = "";
+        // extractString(msg, PICK_UP, pickUp);
+        char temp[20] = "";
+        int pickUp = -1;
+        sscanf(msg, "%s %d", temp, &pickUp);
+
+        if (pickUp != 1 || pickUp != 2) {
+            snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"pick_up\", \"content\": \"Error\"}\n");
+            return;
+        }
+
+        bool pickUpResult = pjsua_interface_pickup_incoming_call(pickUp); 
+        if (pickUpResult){
+            strncpy(r, "{\"msgType\":\"pick_up\", \"content\": \"Success\"}\n", 100);
+        }else{
+            snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"pick_up\", \"content\": \"Error\"}\n");
+        }
+        return;
+       
+    } else if(!strncmp(msg, optionValues[SET_VOLUME], strlen(optionValues[SET_VOLUME]))){
+        //Expected message format: "set_volume n"
+        char temp[20] = "";
+        int volume = -1;
+        sscanf(msg, "%s %d", temp, &volume);
+        printf("setting volume to %d\n", volume);
+
+        if(volume < 0 || volume > 100){
+            snprintf(r, 100, "{\"msgType\":\"volume\", \"content\": \"Error: Invalid volume of %d.\"}\n", volume);
+        }else{
+            //TODO: call set_vol()
+            bool success = true; // placeholder, remove later
+            if (success){
+                strncpy(r, "{\"msgType\":\"volume\", \"content\": \"Success\"}\n", 100);
+                return;
+            }else{
+                snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"volume\", \"content\": \"Error\"}\n");
+            }
+        }
+        return;
+        
+    } else if(!strncmp(msg, optionValues[SET_GAIN], strlen(optionValues[SET_GAIN]))){
+        //Expected message format: "set_gain n"
+        char temp[20] = "";
+        int gain = -1;
+        sscanf(msg, "%s %d", temp, &gain);
+        printf("setting gain to %d\n", gain);
+
+        if(gain < 0 || gain > 100){
+            snprintf(r, 100, "{\"msgType\":\"gain\", \"content\": \"Error: Invalid gain of %d.\"}\n", gain);
+        }else{
+            //TODO: call set_gain()
+            bool success = true; // placeholder, remove later
+            if (success){
+                strncpy(r, "{\"msgType\":\"gain\", \"content\": \"Success\"}\n", 100);
+                return;
+            }else{
+                snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"gain\", \"content\": \"Error\"}\n");
+            }
+        }
+        return;
+        
     } else if (!strncmp(msg, optionValues[STOP], strlen(optionValues[STOP]))){
         strncpy(r, "{\"msgType\":\"stop\", \"content\": \"Stopping program.\"}\n", 100);
         return;

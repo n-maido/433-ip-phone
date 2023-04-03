@@ -1,14 +1,14 @@
 # Makefile for IP phone app
 # Based on the sample A3 Makefile by Brian Fraser
 
-#pjsua dependencies 
+# pjsua dependencies 
 
 PJDIR = /home/san/pjsua/pjproject-2.13
 include $(PJDIR)/build.mak
 
 # Edit this file to compile extra C files into their own programs.
 TARGET= ip_phone
-SOURCES= main.c udp_server/udp_server.c dependencies/utils/util.c module_pjsua/pjsua_interface.c dependencies/buzzer/buzzer.c
+SOURCES= main.c udp_server/udp_server.c dependencies/utils/util.c dependencies/buzzer/buzzer.c utils/utils.c module_pjsua/pjsua_interface.c module_pjsua/pjsua_interface.h dependencies/LED/led.h
 
 PUBDIR = $(HOME)/cmpt433/public/myApps
 OUTDIR = $(PUBDIR)
@@ -38,5 +38,4 @@ clean:
 node:
 	mkdir -p $(PUBDIR)/ip_phone_node_copy/ 
 	cp -R node_server/* $(PUBDIR)/ip_phone_node_copy/ 
-	cd $(PUBDIR)/ip_phone_node_copy/ && npm install
-	
+# cd $(PUBDIR)/ip_phone_node_copy/ && npm install

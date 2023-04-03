@@ -10,6 +10,7 @@ var PORT_NUMBER = 8080;
 
 var http = require('http');
 var fs   = require('fs');
+const { writeFile } = require("fs/promises");
 var path = require('path');
 var mime = require('mime');
 
@@ -18,16 +19,26 @@ var mime = require('mime');
  */
 var server = http.createServer(function(request, response) {
 	var filePath = false;
+	console.log("received request url: " + request.url);
 	
-	if (request.url == '/') {
+	if (request.url === '/') {
 		filePath = 'public/index.html';
+		var absPath = './' + filePath;
+		serveStatic(response, absPath);
+	} else if (request.url === '/saveContact') {
+		saveContact(request, response);
+	} else if (request.url === '/deleteContact') {
+		deleteContact(request, response);
 	} else {
 		filePath = 'public' + request.url;
+		var absPath = './' + filePath;
+		serveStatic(response, absPath);
 	}
 	
-	var absPath = './' + filePath;
-	serveStatic(response, absPath);
+	// var absPath = './' + filePath;
+	// serveStatic(response, absPath);
 });
+
 
 server.listen(PORT_NUMBER, function() {
 	console.log("Server listening on port " + PORT_NUMBER);
@@ -61,6 +72,41 @@ function sendFile(response, filePath, fileContents) {
 			{"content-type": mime.lookup(path.basename(filePath))}
 		);
 	response.end(fileContents);
+}
+
+function saveContact(request, response) {
+	console.log("save endpt reached");
+	let contactsPath = './public/data/contacts.json';
+	request.on('data', async function(data) { 
+		console.log("received data: " + data);
+		let contact = JSON.parse(data);
+
+		let contactsJSON = fs.readFileSync(contactsPath, 'utf-8');
+		let contacts = JSON.parse(contactsJSON);
+		contacts.push(contact);
+
+		fs.writeFileSync(contactsPath, JSON.stringify(contacts), 'utf-8');
+		response.end();
+
+	});
+	response.end();
+}
+
+function deleteContact(request, response) {
+	console.log("delete endpt reached");
+	let contactsPath = './public/data/contacts.json';
+	request.on('data', async function(data) { 
+		console.log("received data: " + data);
+		let address = JSON.parse(data);
+
+		let contactsJSON = fs.readFileSync(contactsPath, 'utf-8');
+		let contacts = JSON.parse(contactsJSON);
+		contacts = contacts.filter(elem=>elem.sipAddress!==address)
+
+		fs.writeFileSync(contactsPath, JSON.stringify(contacts), 'utf-8');
+		response.end();
+	});
+	response.end();
 }
 
 
