@@ -97,11 +97,11 @@ function deleteContact(request, response) {
 	let contactsPath = './public/data/contacts.json';
 	request.on('data', async function(data) { 
 		console.log("received data: " + data);
-		let address = JSON.parse(data);
 
 		let contactsJSON = fs.readFileSync(contactsPath, 'utf-8');
 		let contacts = JSON.parse(contactsJSON);
-		contacts = contacts.filter(elem=>elem.sipAddress!==address)
+		contacts = contacts.filter(elem=>elem.sipAddress!==data.toString());
+		console.log(contacts);
 
 		fs.writeFileSync(contactsPath, JSON.stringify(contacts), 'utf-8');
 		response.end();

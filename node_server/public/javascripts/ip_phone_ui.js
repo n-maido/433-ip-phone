@@ -158,7 +158,7 @@ $(document).ready(function() {
 		}
 
 		// check if the same sip address exists
-		if (array.includes(array.find(elem=>elem.sipAddress === address))) {
+		if (savedContacts.includes(savedContacts.find(elem=>elem.sipAddress === address))) {
 			window.alert("A contact with this sip address already exists.");
 			return;
 		}
@@ -206,12 +206,13 @@ $(document).ready(function() {
 		});
 
 		$.post('/deleteContact', address, function(response) {
-			console.log('Successfully deleted contact to file');
+			console.log('Successfully deleted contact from file');
 			console.log(response);
 		}, 'text');
 
 		// remove from array and table
-		savedContacts = savedContacts.filter(elem=>elem.sipAddress!==address)
+		savedContacts = savedContacts.filter(elem=>elem.sipAddress!==address);
+		console.log(savedContacts);
 		
 		row.remove();
 	});
