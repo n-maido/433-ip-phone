@@ -11,6 +11,8 @@
 #include "dependencies/interface/interface.h"
 #include "dependencies/buzzer/buzzer.h"
 
+
+
 static pthread_cond_t shutdownCondition = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t conditionMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_t shutdownPid = -1;
