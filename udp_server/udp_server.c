@@ -271,8 +271,8 @@ static int udp_receive_thread(void){
     pj_thread_t *thread = pj_thread_this();
     pj_thread_desc desc;
     // pj_thread_get_desc(thread, &desc);
-    pj_thread_get_name(thread);
-    pj_status_t status = pj_thread_register(NULL, desc, NULL);
+    const char* name = pj_thread_get_name(thread);
+    pj_status_t status = pj_thread_register(name, desc, NULL);
     if (status != PJ_SUCCESS) {
         // Handle error
         pjsua_destroy();
