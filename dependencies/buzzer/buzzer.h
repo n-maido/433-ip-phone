@@ -12,7 +12,7 @@ void buzzer_cleanup(void);
 //turns on/off the buzzer 'ring'. Only call buzzer_ring_on once before ring_off.
 void buzzer_ring_on(void);
 void buzzer_ring_off(void);
-
+void buzzer_ring(const double hz);
 //comment redacted.
 void buzzer_secret(void);
 
