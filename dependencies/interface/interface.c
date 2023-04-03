@@ -39,14 +39,14 @@ static enum IFace_status currentStatus = NONE;
 static struct IFace_user* IFace_createUser(char* username, char* sip);
 static void* IFace_runner(void* arg);
 
-int main(){
+/*int main(){
     IFace_initialize();
     IFace_addUser("test1", "1");
     IFace_addUser("test2", "2");
     IFace_addUser("test3", "3");
     sleepMs(10000);
     IFace_cleanup();
-}
+}*/
 
 void IFace_initialize() {
     //create thread, create default user and initialize current / last user, initialize joystick and lcd
