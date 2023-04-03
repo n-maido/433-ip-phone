@@ -6,18 +6,18 @@
  */
 
 var callInProgress = false;
-var username = "user";
-var mySipAddress = "sip:address"; //Later, remove?
+var phoneAlive = false;
+var webAlive = false;
 
-var savedContacts = [{
-		name: "Nhi 1",
-		sipAddress: "sip:nhi@192.168.1.54"
-	},
-	{
-		name: "Nhi 2",
-		sipAddress: "sip:nhi@192.168.1.55"
-	}
-];
+var savedContacts = [];
+
+const Status = {
+	None: 0,
+	Incoming: 1,
+	Ongoing: 2,
+	Outgoing: 3,
+	Error: 4
+}
 
 var successToast = Toastify({
 	text: "Success",
@@ -47,53 +47,89 @@ var errorToast = Toastify({
 	},
 });
 
-/**
- * Get the call status
- * Called every 500ms
- */
-function call_status(){
-	sendCommandViaUDP("call_stats");
-	socket.on('call_stats', (result) => {
-	
-	})
-};
-
 // Make connection to server when web page is fully loaded.
 var socket = io.connect();
 
 $(document).ready(function() {
-	// show the onboarding prompt
-	onboardUser();
-
 	// populate saved contacts table
 	loadContacts();
 
 	// Call a sip address
 	$('#callBtn').click(function(){
 		var callee = $('#sipInput').val();
+
+		if (callee === '') {
+			window.alert("Please fill out the SIP address before proceeding");
+			return;
+		}
+
+		// validate sip uri format
+		if (!validateSIP(callee)) {
+			window.alert("Invalid SIP URI format.\nPlease enter a URI in the format\"sip:user@host:optional_port\"\nwhere \"host\" is an IP address or domain");
+			return;
+		}
 		makeCall(callee);
 	});
 
 	// Hang up a call
-	$('#hangUpBtn').click(function() {
+	$('#ongoingHangUpBtn').click(function() {
 		// do we need to supply addresses to hang up a call?
 		// remove if not needed
-		var calleeText = $('#call-box-text').text().split(" ");
+		var calleeText = $('#ongoingText').text().split(" ");
 		console.log(`calleeText = ${calleeText}`);
 		var callee = calleeText[1];
 
 		sendCommandViaUDP(`end_call=${callee}`);
 
-		hideCallBox();
-
 		socket.on('end_call', function(result) {
 			console.log(result);
-			callInProgress = false;
+			if (result.toLowerCase() === "error") {
+				callInProgress = true;
+				setStatusBox(Status.Error, result);
+			} 	
 		});
 	});
 
+	$('#incomingHangUpBtn').click(function() {
+		// do we need to supply addresses to hang up a call?
+		// remove if not needed
+		// var calleeText = $('#incomingText').text().split(" ");
+		// console.log(`calleeText = ${calleeText}`);
+		// var callee = calleeText[3];
+
+		sendCommandViaUDP(`pick_up 2`); //should we use end_call or have a new cmd reject call?
+
+		socket.on('pick_up', function(result) {
+			if (result.toLowerCase() === "error") {
+				callInProgress = true;
+				setStatusBox(Status.Error, result);
+			} 	
+		});
+	});
+
+	// Pick up an incoming call
+	$('#incomingPickUpBtn').click(function() {
+		// do we need to supply addresses to hang up a call?
+		// remove if not needed
+		// var calleeText = $('#incomingText').text().split(" ");
+		// console.log(`calleeText = ${calleeText}`);
+		// var callee = calleeText[3];
+
+		sendCommandViaUDP(`pick_up 1`); //should we use end_call or have a new cmd reject call?
+
+		socket.on('pick_up', function(result) {
+			console.log(result);
+			if (result.toLowerCase() === "error") {
+				callInProgress = true;
+				setStatusBox(Status.Error, result);
+			} 	
+		});
+	});
+
+
 	// Call a saved contact
-	$(".tableCallBtn").click(function() {
+	$('#contactsTable').on('click', '.tableCallBtn', function() {
+		console.log("contact clicked");
 		// get the row
 		var row = $(this).closest("tr");
 
@@ -103,9 +139,148 @@ $(document).ready(function() {
 		makeCall(callee);
 	});
 
+	// Add a contact
+	$('#addContactBtn').click(function(){
+		let name = $('#contactNameInput').val();
+		let address = $('#contactAddressInput').val();
+
+		if (name === '' || address === '') {
+			window.alert("Please fill out all fields before proceeding");
+			return;
+		}
+
+		// validate sip uri format
+		if (!validateSIP(address)) {
+			window.alert(`Invalid SIP URI format.
+			Please enter a URI in the format "sip:user@host:optional_port"
+			where "host" is an IP address or domain`);
+			return;
+		}
+
+		// check if the same sip address exists
+		if (array.includes(array.find(elem=>elem.sipAddress === address))) {
+			window.alert("A contact with this sip address already exists.");
+			return;
+		}
+
+		let contact = {
+			name: name,
+			sipAddress: address
+		}
+
+		sendCommandViaUDP(`add_contact=${name}&${address}`)
+		socket.on('add_contact', function(result) {
+			if (result.toLowerCase() !== 'success') {
+				console.log(result);
+			}
+		});
+
+		savedContacts.push(contact);
+		appendContact(name, address);
+
+		$('#contactNameInput').val('');
+		$('#contactAddressInput').val('');
+
+		// save to json file
+		console.log("sending post json request");
+		$.post('/saveContact', JSON.stringify(contact), function(response) {
+			console.log('Successfully saved contact to file');
+			console.log(response);
+		}, 'json');
+	});
+
+	// Delete contact
+	$('#contactsTable').on('click', '.tableDeleteBtn', function() {
+		console.log("contact delete clicked");
+		// get the row
+		var row = $(this).closest("tr");
+
+		// address is the 2nd td in the row
+		var address = row.find("td:nth-child(2)").text(); 
+
+		sendCommandViaUDP(`delete_contact=${address}`)
+		socket.on('delete_contact', function(result) {
+			if (result.toLowerCase() !== 'success') {
+				console.log(result);
+			}
+		});
+
+		$.post('/deleteContact', address, function(response) {
+			console.log('Successfully deleted contact to file');
+			console.log(response);
+		}, 'text');
+
+		// remove from array and table
+		savedContacts = savedContacts.filter(elem=>elem.sipAddress!==address)
+		
+		row.remove();
+	});
+
+	// Volume control
+	$('#volumeDown').click(function(){
+		var volume = parseInt($('#curVolume').val());
+		volume = isNaN(volume) ? -1 : volume - 5;
+
+		if (volume >= 0 && volume <= 100) {
+			sendCommandViaUDP(`set_volume ${volume}`);
+			socket.on('volume', function(result) {
+				if (result.toLowerCase() === "error") {
+					callInProgress = true;
+					setStatusBox(Status.Error, result);
+				} 
+			});
+		}		
+	});
+	$('#volumeUp').click(function(){
+		var volume = parseInt($('#curVolume').val());
+		volume = isNaN(volume) ? -1 : volume + 5;
+		console.log("vol = " + volume);
+
+		if (volume >= 0 && volume <= 100) {
+			sendCommandViaUDP(`set_volume ${volume}`);
+			socket.on('volume', function(result) {
+				if (result.toLowerCase() === "error") {
+					callInProgress = true;
+					setStatusBox(Status.Error, result);
+				} 
+			});
+		}
+	});
+
+	// Gain control
+	$('#gainDown').click(function(){
+		var gain = parseInt($('#curGain').val());
+		gain = isNaN(gain) ? -1 : gain - 5;
+
+		if (gain >= 0 && gain <= 100) {
+			sendCommandViaUDP(`set_gain ${gain}`);
+			socket.on('gain', function(result) {
+				if (result.toLowerCase() === "error") {
+					callInProgress = true;
+					setStatusBox(Status.Error, result);
+				} 
+			});
+		}
+	});
+
+	$('#gainUp').click(function(){
+		var gain = parseInt($('#curGain').val());
+		gain = isNaN(gain) ? -1 : gain + 5;
+
+		if (gain >= 0 && gain <= 100) {
+			sendCommandViaUDP(`set_gain ${gain}`);
+			socket.on('gain', function(result) {
+				if (result.toLowerCase() === "error") {
+					callInProgress = true;
+					setStatusBox(Status.Error, result);
+				} 
+			});
+		}
+	});
+
 	// Stop program
 	$('#stop').click(function(){
-		sendCommandViaUDP("stop");
+		shutdown();
 	});
 });
 
@@ -114,7 +289,77 @@ function sendCommandViaUDP(message) {
 	socket.emit('udpCommand', message);
 };
 
-// setInterval(() => {heartbeat_info()}, 1000);
+/**
+ * Get the call status
+ * Called every 500ms
+ */
+function call_status(){
+	sendCommandViaUDP("call_status");
+	socket.on('call_status', (result) => {
+		switch(result.status) {
+			case Status.Incoming:
+				callInProgress = true;
+				setStatusBox(Status.Incoming, result);
+				break;
+			case Status.Ongoing:
+			case Status.Outgoing:
+				callInProgress = true;
+				setStatusBox(Status.Ongoing, result);
+				break;
+			case Status.Error:
+				callInProgress = false;
+				setStatusBox(Status.Error, result);
+				break;
+			case Status.None:
+				callInProgress = false;
+				setStatusBox(Status.None, "");
+				break;
+		}
+	})
+};
+
+setInterval(() => {call_status()}, 500);
+
+/**
+ * Called every 1s
+ * Checks if the web server and c application is responsive 
+ */
+function checkAlive() {
+	// Check if the server is responding
+	socket.emit('web_alive');
+
+	// If the server hasn't responded for 800ms, show error
+	var serverErrorTimer = setTimeout(function() {
+		webAlive = false;
+		$('#webStatus').text('NOT RUNNING');
+		$('#webStatus').css('color', 'red');
+
+	}, 800);
+
+	socket.on('web_alive', function(){
+		clearTimeout(serverErrorTimer);
+		webAlive = true;
+		$('#webStatus').text('RUNNING');
+		$('#webStatus').css('color', 'green');
+	})
+
+	// Check if the udp server is responding
+	// Server sets a timeout after sending a udp msg to the c app
+	// If it receives a response, it notifies us
+	socket.on('udpError', function(){
+		phoneAlive = false;
+		$('#phoneStatus').text('OFF');
+		$('#phoneStatus').css('color', 'red');
+	})
+
+	socket.on('udpSuccess', function(){
+		phoneAlive = true;
+		$('#phoneStatus').text('ON');
+		$('#phoneStatus').css('color', 'green');
+	})
+}
+
+setInterval(() => {checkAlive()}, 1000);
 
 /**
  * Sends a msg to the C app to call the provided sip address
@@ -124,27 +369,60 @@ function makeCall(callee) {
 		window.alert("There is call in progress. Please hang up and try again.");
 		return;
 	}
-	sendCommandViaUDP(`make_call=${callee}`);
 
-	showCallBox(callee);
+	sendCommandViaUDP(`make_call=${callee}`);
 
 	socket.on('make_call', function(result) {
 		console.log(result);
-		callInProgress = true;
+		if (result.toLowerCase() === "error") {
+			callInProgress = false;
+			// TODO: set status box to none and show error toast instead?
+			setStatusBox(Status.Error, result);
+		} 	
 	});
 }
 
-// Shows the call box when we initiate a call
-// User can hang up the call form here
-function showCallBox(callee) {
-	$('#call-box-text').text(`Calling ${callee}`);
-	$('#call-box').show();
+/**
+ * Validates the SIP URI
+ * Should be in the format "sip:user@host:optional_port"
+ * host = IP address or domain
+ */
+function validateSIP(address) {
+	// regex pattern from: https://regex101.com/r/5OJJxF/1/ 
+	let sipREGEX = /^(sip?):([^@\n]+)(?:@(.+))?$/;
+	return sipREGEX.test(address);
 }
 
-// Hides the call box when the user hangs up
-function hideCallBox() {
-	$('#call-box-text').text('');
-	$('#call-box').hide();
+function setStatusBox(status, data) {
+	switch (status) {
+		case Status.Incoming:
+			// show incoming box, hide the others
+			console.log("showing incoming status");
+			$('#ongoingBox').hide();
+			$('#errorBox').hide();
+			$('#incomingText').text(`Incoming call from ${data.address}`);
+			$('#incomingBox').show();
+			break;
+		case Status.Ongoing:
+			$('#incoming').hide();
+			$('#errorBox').hide();
+			$('#ongoingText').text(`Calling ${data.address}`);
+			$('#curVolume').val(data.vol);
+			$('#curGain').val(data.gain);
+			$('#ongoingBox').show();
+			break;
+		case Status.Error:
+			$('#incomingBox').hide();
+			$('#ongoingBox').hide();	
+			$('#errorText').text(`Error: ${data.error}`);
+			$('#errorBox').show();
+			break;
+		case Status.None:
+			$('#incomingBox').hide();
+			$('#ongoingBox').hide();	
+			$('#errorBox').hide();	
+			break;	
+	}
 }
 
 function onboardUser() {
@@ -163,20 +441,47 @@ function onboardUser() {
 	});
 }
 
+// Appends a contact to the contacts table
+function appendContact(name, address) {
+	let tableRow = `<tr>
+		<td>${name}</td>
+		<td>${address}</td>
+		<td>
+			<input type="button" class="tableCallBtn" value="Call">
+		</td>
+		<td>
+			<input type="button" class="tableDeleteBtn" value="Delete">
+		</td>
+	</tr>`
+
+	$('#contactsTable tr:last').after(tableRow);
+}
+
 function loadContacts() {
-	let count = 0;
+	// load from json file
+	$.getJSON("data/contacts.json", function(data){
+		data.forEach((contact) => {
+			savedContacts.push(contact);
+			appendContact(contact.name, contact.sipAddress);
 
-	savedContacts.forEach((contact) => {
-		let tableRow = `<tr>
-			<td>${contact.name}</td>
-			<td>${contact.sipAddress}</td>
-			<td>
-				<input type="button" class="tableCallBtn" value="Call">
-			</td>
-		</tr>`
+			sendCommandViaUDP(`add_contact=${contact.name}&${contact.sipAddress}`);
 
-		$('#contactsTable tr:last').after(tableRow);
-		count++;
+			socket.on('add_contact', function(result) {
+				if (result.toLowerCase() !== 'success') {
+					console.log(result);
+				}
+			});
+		});
+	}).fail(function(){
+		console.log("Error loading saved contacts.");
 	});
+}
 
+function shutdown() {
+	// save contacts to json file
+
+	// stop server
+	sendCommandViaUDP("stop");
+
+	// show status: app is unavailable
 }

@@ -1,7 +1,7 @@
 # Makefile for IP phone app
 # Based on the sample A3 Makefile by Brian Fraser
 
-#pjsua dependencies 
+# pjsua dependencies 
 
 PJDIR = /home/san/pjsua/pjproject-2.13
 include $(PJDIR)/build.mak
@@ -38,5 +38,4 @@ clean:
 node:
 	mkdir -p $(PUBDIR)/ip_phone_node_copy/ 
 	cp -R node_server/* $(PUBDIR)/ip_phone_node_copy/ 
-	cd $(PUBDIR)/ip_phone_node_copy/ && npm install
-	
+# cd $(PUBDIR)/ip_phone_node_copy/ && npm install
