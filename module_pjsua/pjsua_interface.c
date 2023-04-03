@@ -40,6 +40,7 @@
 #include <pthread.h>
 #include "pjsua_interface.h"
 #include <pjsua-lib/pjsua.h>
+#include "dependencies/LED/led.h"
 
 #define THIS_FILE	"pjsua"
 
@@ -216,13 +217,13 @@ int pjsua_interface_init(pthread_cond_t * cond, pthread_mutex_t * lock){
         sendShutdownRequest();
         return -1;
     }
-
+    LED_startUp();
     return 1;
 }
 
 int pjsua_interface_cleanup(void){
     
-
+    LED_cleanUp();
     if(pthread_join(pjsuaThreadPID, NULL) != 0){
         perror("Error in joining the phsua thread.");
     }
