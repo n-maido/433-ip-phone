@@ -1,6 +1,9 @@
 /*
     Pjsua interface for application
-    Sanseerat Virk
+    Created by Sanseerat Virk
+    heavily Modiefied sample application code provided at the following links
+    https://www.pjsip.org/pjlib/docs/html/page_pjlib_thread_test.htm
+    https://github.com/chakrit/pjsip/blob/master/pjsip-apps/src/samples/simple_pjsua.c
     Usage / cautions:
         -pthread must be added to the compiler flags. 
 
