@@ -1,18 +1,56 @@
 /*
     Pjsua interface for application
     Created by Sanseerat Virk
-    heavily Modiefied sample application code provided at the following links
-    https://www.pjsip.org/pjlib/docs/html/page_pjlib_thread_test.htm
-    https://github.com/chakrit/pjsip/blob/master/pjsip-apps/src/samples/simple_pjsua.c
-    Usage / cautions:
-        -pthread must be added to the compiler flags. 
 
-        startUp() must be called before anything else.
-        cleanUp() must be called at the end of execution in order to clear the 8-segment display. 
-            If cleanUp is not successfully called:
-            -There may be unclosed file descriptors
-            -There may be an unclosed thread. 
-*/
+    heavily Modiefied sample application code provided at the following links
+   
+       
+    Using the resources menitoned in the h file this was used a as a barebone tempelate
+    after understanding the template this sample pjsua code was heavily modified to match our needs 
+    https://www.pjsip.org/pjlib/docs/html/page_pjlib_thread_test.htm
+    https://github.com/chakrit/pjsip/blob/master/pjsip-apps/src/samples/simple_pjsua
+
+    Usage / cautions:
+    all threads attempting to access the pjsua fucntions must be registerd to pjsua otherwise application will crash
+
+
+ * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
+ * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+ */
+
+/**
+ * simple_pjsua.c
+ *
+ * This is a very simple but fully featured SIP user agent, with the 
+ * following capabilities:
+ *  - SIP registration
+ *  - Making and receiving call
+ *  - Audio/media to sound device.
+ *
+ * Usage:
+ *  - To make outgoing call, start simple_pjsua with the URL of remote
+ *    destination to contact.
+ *    E.g.:
+ *       simpleua sip:user@remote
+ *
+ *  - Incoming calls will automatically be answered with 200.
+ *
+ * This program will quit once it has completed a single call.
+ */
 
 #ifndef PJSUA_INTERFACE
 #define PJSUA_INTERFACE
