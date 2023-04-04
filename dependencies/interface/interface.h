@@ -15,7 +15,10 @@ void IFace_removeUser(char* sip);
 //Update the display in case of incoming call or such
 void IFace_updateStatus(int status, char* address);
 
+//Main thread
+void* IFace_runner(void* arg);
+
 //remove thread, delete all users
-void IFace_cleanup();
+void IFace_cleanup(pthread_t threadID);
 
 #endif
