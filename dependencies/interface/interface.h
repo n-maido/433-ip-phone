@@ -3,9 +3,6 @@
 #ifndef _INTERFACE_H_
 #define _INTERFACE_H_
 
-#include <pthread.h>
-#include <stdbool.h>
-
 //Create thread, create default user and initialize current / last user, initialize joystick and lcd
 void IFace_initialize();
 
@@ -21,8 +18,8 @@ void IFace_updateStatus(int status, char* address);
 //Main thread
 void* IFace_runner(void* arg);
 
-//Determines if the thread is running
-bool IFace_running;
+//Ends the thread
+void IFace_endThread();
 
 //remove thread, delete all users
 void IFace_cleanup();

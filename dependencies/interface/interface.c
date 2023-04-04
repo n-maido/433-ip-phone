@@ -20,7 +20,7 @@ struct IFace_user {
 
 static struct IFace_user *IFace_currentUser;
 static struct IFace_user *IFace_lastUser;
-bool IFace_running = false;
+static bool IFace_running = false;
 
 static pthread_t tid;
 static pthread_attr_t attr;
@@ -200,6 +200,10 @@ void* IFace_runner(void* arg) {
     }
 
     return NULL;
+}
+
+void IFace_endThread() {
+    IFace_running = false;
 }
 
 void IFace_cleanup() {
