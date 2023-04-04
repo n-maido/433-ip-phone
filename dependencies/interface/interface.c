@@ -57,8 +57,8 @@ void IFace_initialize() {
     LCD_writeMessage(IFace_currentUser->name, IFace_currentUser->sip);
 
     IFace_running = true;
-    pthread_attr_init(&attr);
-    pthread_create(&tid, &attr, IFace_runner, NULL);
+    //pthread_attr_init(&attr);
+    //pthread_create(&tid, &attr, IFace_runner, NULL);
 }
 
 static struct IFace_user* IFace_createUser(char* username, char* sip){
@@ -140,7 +140,7 @@ void IFace_updateStatus(int status, char* address) {
     }
 }
 
-static void* IFace_runner(void* arg) {
+void* IFace_runner(void* arg) {
     if (IFace_currentUser == NULL || IFace_lastUser == NULL) {
         printf("\nERROR: INTERFACE NOT INITIALIZED!\n");
         return NULL;
@@ -149,10 +149,14 @@ static void* IFace_runner(void* arg) {
     //main interface loop
     while(IFace_running){
         enum JS_direction input = JS_read();
+
+        //Await input
         while (input == NONE && IFace_running) {
             sleepMs(100);
             input = JS_read();
         }
+
+        //Pick up or decline
         if (currentStatus == INCOMING){
             if (input == IN){
                 pjsua_interface_pickup_incoming_call(1);
@@ -160,9 +164,13 @@ static void* IFace_runner(void* arg) {
                 pjsua_interface_pickup_incoming_call(2);
             }
         }
+
+        //Hang up
         if (currentStatus == OUTGOING && input == DOWN) {
             pjsua_interface_hang_up_call();
         }
+
+        //Menu
         if (currentStatus != NOCALL) continue;
         switch (input){
             //Scroll back a contact
@@ -195,7 +203,7 @@ static void* IFace_runner(void* arg) {
     return NULL;
 }
 
-void IFace_cleanup() {
+void IFace_cleanup(pthread_t threadID) {
     if (IFace_currentUser == NULL || IFace_lastUser == NULL) {
         printf("\nERROR: INTERFACE NOT INITIALIZED!\n");
         return;
@@ -204,7 +212,7 @@ void IFace_cleanup() {
     //remove thread, delete all users
     IFace_running = false;
 
-    pthread_join(tid, NULL);
+    pthread_join(threadID, NULL);
 
     struct IFace_user *next = IFace_lastUser->prev;
     for(IFace_currentUser = IFace_lastUser; IFace_currentUser != NULL; IFace_currentUser = next){
