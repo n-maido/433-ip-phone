@@ -103,18 +103,14 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
             case 2:  // call in session, outgoing call
             case 3:
             {
-                int vol = 50;
                 int gain = 10;
                 //TODO: get cur address
+
+                // get cur vol
+                int vol = pjsua_interface_get_volume();
                 snprintf(r, 150, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\", \"vol\": %d, \"gain\": %d}}\n", status, address, vol, gain);
                 break;
             }
-            // case 3: // outgoing call
-            // {
-            //     char* error = "Error";
-            //     snprintf(r, 150, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"error\": \"%s\"}}\n", status, error);
-            //     break;
-            // }
             default:
                 snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d}}\n", status);
         }
@@ -227,14 +223,8 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         if(volume < 0 || volume > 100){
             snprintf(r, 100, "{\"msgType\":\"volume\", \"content\": \"Error: Invalid volume of %d.\"}\n", volume);
         }else{
-            //TODO: call set_vol()
-            bool success = true; // placeholder, remove later
-            if (success){
-                strncpy(r, "{\"msgType\":\"volume\", \"content\": \"Success\"}\n", 100);
-                return;
-            }else{
-                snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"volume\", \"content\": \"Error\"}\n");
-            }
+            pjsua_interface_set_volume(volume);
+            strncpy(r, "{\"msgType\":\"volume\", \"content\": \"Success\"}\n", 100);
         }
         return;
         

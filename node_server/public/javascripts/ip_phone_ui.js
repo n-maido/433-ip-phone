@@ -306,6 +306,7 @@ function call_status(){
 			case Status.Outgoing:
 				callInProgress = true;
 				setStatusBox(Status.Ongoing, result);
+				$('#curVolume').val() = result.vol;
 				break;
 			case Status.Error:
 				callInProgress = false;
