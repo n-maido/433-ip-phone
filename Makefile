@@ -3,7 +3,7 @@
 
 # pjsua dependencies 
 
-PJDIR = ../pjproject-2.13
+PJDIR = /home/san/pjsua/pjproject-2.13
 include $(PJDIR)/build.mak
 
 # Edit this file to compile extra C files into their own programs.
