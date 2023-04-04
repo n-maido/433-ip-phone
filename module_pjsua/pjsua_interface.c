@@ -40,6 +40,9 @@
 #include <pthread.h>
 #include "pjsua_interface.h"
 #include <pjsua-lib/pjsua.h>
+#include <pjlib.h>
+#include "../udp_server/udp_server.h"
+
 #include "../dependencies/utils/util.h"
 #include "../dependencies/buzzer/buzzer.h"
 #include "../dependencies/LED/led.h"
@@ -380,17 +383,17 @@ int pjsua_interface_get_status_call(){
     switch (getStatus)
     {
     case 0:
-        PJ_LOG(3,(THIS_FILE, "none,free to call ,no status to report"));
+        //PJ_LOG(3,(THIS_FILE, "none,free to call ,no status to report"));
         break;
     case 1:
 
-        PJ_LOG(3,(THIS_FILE, "incoming call, ringing"));
+       // PJ_LOG(3,(THIS_FILE, "incoming call, ringing"));
         break;
     case 2:
-        PJ_LOG(3,(THIS_FILE, "call in session"));
+       // PJ_LOG(3,(THIS_FILE, "call in session"));
         break;
     case 3:
-        PJ_LOG(3,(THIS_FILE, "outgoing call"));
+      //  PJ_LOG(3,(THIS_FILE, "outgoing call"));
         break;
 
     default:
@@ -400,6 +403,48 @@ int pjsua_interface_get_status_call(){
     return getStatus;
    
 }
+
+
+
+
+//https://www.pjsip.org/pjlib/docs/html/page_pjlib_thread_test.htm
+static void* thread_proc(){
+
+    pj_thread_desc desc;
+    pj_thread_t *this_thread;
+    unsigned id;
+    pj_status_t rc;
+
+    PJ_UNUSED_ARG(id);
+    PJ_LOG(3,(THIS_FILE, "RUNNING THREAD PROC "));
+
+    pj_bzero(desc,sizeof(desc));
+
+    rc=pj_thread_register("thread",desc,&this_thread);
+
+    if(rc!=PJ_SUCCESS){
+
+        PJ_LOG(3,(THIS_FILE, "Registering thread proc failed "));
+        return NULL;
+    }
+    
+    /* Test that pj_thread_this() works */
+    this_thread = pj_thread_this();
+    if (this_thread == NULL) {
+    PJ_LOG(3,(THIS_FILE, "...error: pj_thread_this() returns NULL!"));
+    return NULL;
+    }
+    /* Test that pj_thread_get_name() works */
+    if (pj_thread_get_name(this_thread) == NULL) {
+    PJ_LOG(3,(THIS_FILE, "...error: pj_thread_get_name() returns NULL!"));
+    return NULL;
+    }
+    /* Main loop */
+
+    return NULL;
+}
+
+
 
 
 
@@ -461,7 +506,7 @@ static int pjsua_thread(void){
 
     pjsua_acc_config network_account_config;
     pjsua_acc_config_default(&network_account_config);
-    network_account_config.id = pj_str("sip:ryan@192.168.1.207");
+    network_account_config.id = pj_str("sip:debian1@192.168.1.129");
     status = pjsua_acc_add(&network_account_config, PJ_TRUE, &network_account_id);
     if (status != PJ_SUCCESS)  error_exit("Error second account", status);
 
@@ -494,6 +539,45 @@ static int pjsua_thread(void){
         */
     }
 
+
+    //create worker thread thread_proc
+    pj_caching_pool cp;
+    pj_pool_t *pool;
+    pj_thread_t *thread , *network;
+    pj_caching_pool_init(&cp, NULL, 1024);
+    pj_status_t rc;
+    pool = pj_pool_create(&cp.factory, NULL, 0, 0, NULL);
+    if (!pool) return -1000;
+    
+    // rc = pj_thread_create(pool, "thread", (pj_thread_proc *)&thread_proc,
+    //                       NULL,
+    //                       PJ_THREAD_DEFAULT_STACK_SIZE,
+    //                       0,
+    //                       &thread);
+    // if (rc != PJ_SUCCESS)
+    // {
+        
+    //     error_exit("Error creating worker thread", rc);
+    // };
+
+    //  pj_thread_join(thread);
+
+
+    rc = pj_thread_create(pool, "network", (pj_thread_proc *)&udp_receive_thread,
+                          NULL,
+                          PJ_THREAD_DEFAULT_STACK_SIZE,
+                          0,
+                          &network);
+
+    if (rc != PJ_SUCCESS)
+    {
+        
+        error_exit("Error creating network thread", rc);
+    };
+    
+  
+   
+
     /* If URL is specified, make call to the URL. */
 
     /* Wait until user press "q" to quit. */
@@ -510,6 +594,7 @@ static int pjsua_thread(void){
             break;
 
         if (option[0] == 'h')
+            
             pjsua_call_hangup_all();
 
         if (option[0] == 's')
@@ -525,14 +610,15 @@ static int pjsua_thread(void){
             //pjsua_conf_adjust_tx_level(0, 0.01);
             // pj_str_t uri = pj_str("sip:san@192.168.26.128");
 
-            // status = pjsua_call_make_call(acc_id, &uri, 0, NULL, NULL, NULL);
-            // if (status != PJ_SUCCESS) error_exit("Error making call", status);
+            // status = pjsua_call_make_call(linphone_account_id, &uri, 0, NULL, NULL, NULL);
+           // if (status != PJ_SUCCESS) error_exit("Error making call", status);
             if(pjsua_interface_make_call("sip:san@192.168.26.128")){
 
                  PJ_LOG(3,(THIS_FILE, "make call succesful, call is active"));
             }else{
                  PJ_LOG(3,(THIS_FILE, "make call unsuccesful, call in progress or invalid uri"));
             }
+        
         }
      
         if (option[0]== 'x') {
@@ -570,10 +656,13 @@ static int pjsua_thread(void){
 
     /* Destroy pjsua */
 
-    pjsua_destroy();
+   
     sendShutdownRequest();
+    //pj_thread_join(network); 
+    pjsua_destroy();
     return 0;
 }
+
 
 
 

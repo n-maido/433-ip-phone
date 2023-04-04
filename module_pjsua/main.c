@@ -20,14 +20,14 @@ void init(void){
     //allow any of the modules to shutdown the program if it breaks.
     pjsua_interface_init(&shutdownCondition, &conditionMutex);
     buzzer_init();
-    IFace_initialize();
+    //IFace_initialize();
 }
 
 //shutdown all of the modules.
 void shutdown_app(void){
     pjsua_interface_cleanup();
     buzzer_cleanup();
-    IFace_cleanup();
+    //IFace_cleanup();
 }
 
 //awaits a conditional variable, halting execution of the main thread until another thread signals.

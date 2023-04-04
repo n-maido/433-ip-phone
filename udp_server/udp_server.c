@@ -9,6 +9,8 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include <pjsua-lib/pjsua.h>
+#include <pjlib.h>
+#define THIS_FILE   "udp_server"
 
 #include "udp_server.h"
 #include "../module_pjsua/pjsua_interface.h"
@@ -270,19 +272,25 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
 //constantly wait for messages on the given port. 
 //returns -1 on failure, and will send out a shutdown request if it fails / receives a quit request.
 //can it shutdown 
-static int udp_receive_thread(void){
-    // TODO: Register the current thread with PJSIP
-    pj_thread_t *thread = pj_thread_this();
+void udp_receive_thread(void *arg){
+    
     pj_thread_desc desc;
-    // pj_thread_get_desc(thread, &desc);
-    const char* name = pj_thread_get_name(thread);
-    pj_status_t status = pj_thread_register(name, desc, NULL);
-    if (status != PJ_SUCCESS) {
-        // Handle error
-        pjsua_destroy();
-        return 1;
-    }
+    pj_thread_t *this_thread;
+    unsigned id;
+    pj_status_t rc;
+    PJ_UNUSED_ARG(id);
 
+    PJ_LOG(3,(THIS_FILE, "RUNNING UDP Receive Thread "));
+
+    pj_bzero(desc,sizeof(desc));
+
+    rc=pj_thread_register("network",desc,&this_thread);
+
+    if(rc!=PJ_SUCCESS){
+
+        PJ_LOG(3,(THIS_FILE, "Registering network thread failed "));
+        return;
+    }
     printf("Listening on UDP port 11037.\n");
     while(waitForMessages){
         // struct sockaddr_in sinRemote = {0};
@@ -291,7 +299,8 @@ static int udp_receive_thread(void){
         if(bytesRx < 0){
             perror("Error in recvfrom");
             sendShutdownRequest();
-            return -1;
+            break;
+            //return -1;
         }
         messageRx[bytesRx] = 0;
         // printf("Message = %s\n", messageRx);
@@ -309,14 +318,15 @@ static int udp_receive_thread(void){
 
         if(!strncmp(messageRx, optionValues[STOP], strlen(optionValues[STOP]))){
             waitForMessages = false;
-            sendShutdownRequest();
+            //sendShutdownRequest();
             sendto(udpSocket, "", strlen(""), 0, (struct sockaddr*) &remote_sin, sin_len);
             break;
         }
         
     }
-    return 0;
+    return;
 }
+
 
 int udp_init(pthread_cond_t * cond, pthread_mutex_t * lock){
     shutdownRequest = cond;
@@ -345,11 +355,12 @@ int udp_init(pthread_cond_t * cond, pthread_mutex_t * lock){
     }
 
     waitForMessages = true;
-    if(pthread_create(&udpThreadPID, NULL, (void*)&udp_receive_thread, NULL) != 0){
-        perror("Error in creating udp receiving thread.");
-        sendShutdownRequest();
-        return -1;
-    }
+    // if(pthread_create(&udpThreadPID, NULL, (void*)&udp_receive_thread, NULL) != 0){
+    //     perror("Error in creating udp receiving thread.");
+    //     sendShutdownRequest();
+    //     return -1;
+    // }
+    
 
     return 1;
 }
@@ -362,9 +373,9 @@ int udp_cleanup(void){
     printf("Sending stop signal:\n");
     char quit[5] = "stop";
     sendto(udpSocket, quit, strlen(quit), 0, (struct sockaddr *) &beagle_sin, sin_len);
-    if(pthread_join(udpThreadPID, NULL) != 0){
-        perror("Error in joining the UDP thread.");
-    }
+    // if(pthread_join(udpThreadPID, NULL) != 0){
+    //     perror("Error in joining the UDP thread.");
+    // }
     close(udpSocket);
     return 1;
 }
