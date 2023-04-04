@@ -14,7 +14,7 @@
 
 #define SIP_DOMAIN	"192.168.7.2" //make this automatic look into sample app 
 #define SIP_USER_COMPUTER "debian"
-#define SIP_USER_NETWORK  "debian01"
+#define SIP_USER_NETWORK  "san"
 #define CURRENT_URI_SIZE 1024
 static pthread_t pjsuaThreadPID = -1;
 static pthread_cond_t * shutdownRequest = NULL;
@@ -661,6 +661,7 @@ static int pjsua_thread(void){
         if (option[0]== 'u') {
 
             
+            
             PJ_LOG(3,(THIS_FILE, "REMOTE URI: %s",current_uri));
             
            
@@ -672,7 +673,7 @@ static int pjsua_thread(void){
 
    
     sendShutdownRequest();
-    //pj_thread_join(network); 
+    pj_thread_join(network); 
     pjsua_destroy();
     return 0;
 }
