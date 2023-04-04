@@ -284,7 +284,7 @@ void udp_receive_thread(void *arg){
 
     pj_bzero(desc,sizeof(desc));
 
-    rc=pj_thread_register("network",desc,&this_thread);
+    //rc=pj_thread_register("network",desc,&this_thread);
 
     if(rc!=PJ_SUCCESS){
 

@@ -38,6 +38,13 @@ void IP_get_eth0_ip(char * str){
 				strncpy(str, host, 16);
 				break;
 			}
+
+            // //test when eth0 not connnected
+			// if(!strncmp(ifa_node->ifa_name, "lo", strlen("lo"))){
+			// 	//"255.255.255.255" is 15 + 1 characters long.
+			// 	strncpy(str, host, 16);
+			// 	break;
+			// }
         }
     }
 

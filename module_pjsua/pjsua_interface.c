@@ -1,3 +1,10 @@
+/*
+
+    Sanseerat Virk
+    Using the resources menitoned in the h file this was used a as a barebone tempelate
+    after understanding the template this sample pjsua code was heavily modified to match our needs 
+
+*/
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -46,13 +53,14 @@
 #include "../dependencies/utils/util.h"
 #include "../dependencies/buzzer/buzzer.h"
 #include "../dependencies/LED/led.h"
+#include "../dependencies/ipaddr/ipaddr.h"
 
 #define THIS_FILE	"pjsuaInterface"
 
 #define SIP_DOMAIN	"192.168.7.2" //make this automatic look into sample app 
-#define SIP_USER	"debian"
-#define SIP_USER1	"debian1"
-
+#define SIP_USER_COMPUTER "debian"
+#define SIP_USER_NETWORK  "debian01"
+#define CURRENT_URI_SIZE 1024
 static pthread_t pjsuaThreadPID = -1;
 static pthread_cond_t * shutdownRequest = NULL;
 static pthread_mutex_t * shutdownLock = NULL;
@@ -73,8 +81,8 @@ static pthread_mutex_t tx_volume_mutex;
 static int tx_volume;
 
 
-static pthread_mutex_t tx_volume_mutex;
-static int tx_volume;
+static pthread_mutex_t current_uri_mutex;
+static char *current_uri;
 
 static pjsua_acc_id linphone_account_id;
 static pjsua_acc_id network_account_id;
@@ -193,10 +201,24 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
                          (int)ci.state_text.slen,
                          ci.state_text.ptr));
      
-    //allows for new incoming call to be picked up after current in session call is diconected
-    
+    //////site this code
+       /* Extract call information */
+    pj_str_t remote_address = ci.remote_info;
+    pj_str_t remote_contact = ci.remote_contact;
+    pj_str_t remote_uri = ci.remote_info;
 
+    /* Use the call information */
+    printf("Remote address: %.*s\n", (int)remote_address.slen, remote_address);
+    printf("Remote contact: %.*s\n", (int)remote_contact.slen, remote_contact);
+    printf("Remote URI: %.*s\n", (int)remote_uri.slen, remote_uri);
+    memset(current_uri, 0, sizeof(CURRENT_URI_SIZE));
+    sprintf(current_uri,"%s",remote_uri); 
+    /////////////
+
+
+    //allows for new incoming call to be picked up after current in session call is diconected
     if(call_id==current_call){
+
 
         if(ci.state == PJSIP_INV_STATE_DISCONNECTED){
             pthread_mutex_lock(&call_mutex);
@@ -420,7 +442,8 @@ static void* thread_proc(){
 
     pj_bzero(desc,sizeof(desc));
 
-    rc=pj_thread_register("thread",desc,&this_thread);
+
+    //rc=pj_thread_register("thread",desc,&this_thread);
 
     if(rc!=PJ_SUCCESS){
 
@@ -456,6 +479,12 @@ static int pjsua_thread(void){
     /* Create pjsua first! */
     status = pjsua_create();
     if (status != PJ_SUCCESS) error_exit("Error in pjsua_create()", status);
+
+     
+    /* Initialize PJLIB-UTIL */
+    status = pjlib_util_init();
+    PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+    
 
     /* Init pjsua */
     {
@@ -500,16 +529,37 @@ static int pjsua_thread(void){
     //register without sip server account
     pjsua_acc_config linphone_config;
     pjsua_acc_config_default(&linphone_config);
-    linphone_config.id = pj_str("sip:" SIP_USER "@" SIP_DOMAIN);
+    linphone_config.id = pj_str("sip:" SIP_USER_COMPUTER "@" SIP_DOMAIN);
     status = pjsua_acc_add(&linphone_config, PJ_TRUE, &linphone_account_id);
     if (status != PJ_SUCCESS)  error_exit("Error first account", status);
 
+    /*
+
+    pass a buffer to the ip addr fucntion of lenght n
+    
+    */ 
+   char buffer[16];//max ip lenght ipv4
+   strcpy(buffer,"e");
+   IP_get_eth0_ip(buffer);
+   if(buffer[0]=='e'){
+    PJ_LOG(3,(THIS_FILE,"ETH 0 NOT ASSINGED IP ADDRESS"));
+   }else{
+    PJ_LOG(3,(THIS_FILE,"ETH 0 ASSINGED IP ADDRESS: %s \n",buffer));
+
+
     pjsua_acc_config network_account_config;
     pjsua_acc_config_default(&network_account_config);
-    network_account_config.id = pj_str("sip:debian1@192.168.1.129");
+    char uri_buffer[1024];
+    sprintf(uri_buffer,"sip:%s@%s",SIP_USER_NETWORK,buffer);
+    //network_account_config.id = pj_str("sip:debian1@192.168.1.129");
+    network_account_config.id = pj_str(uri_buffer);
     status = pjsua_acc_add(&network_account_config, PJ_TRUE, &network_account_id);
     if (status != PJ_SUCCESS)  error_exit("Error second account", status);
 
+
+   }
+
+    
     /* Register to SIP server by creating SIP account. */
     {
         // pjsua_acc_config cfg;
@@ -546,21 +596,21 @@ static int pjsua_thread(void){
     pj_thread_t *thread , *network;
     pj_caching_pool_init(&cp, NULL, 1024);
     pj_status_t rc;
-    pool = pj_pool_create(&cp.factory, NULL, 0, 0, NULL);
+    pool = pj_pool_create(&cp.factory, NULL, 4000, 4000, NULL);
     if (!pool) return -1000;
     
-    // rc = pj_thread_create(pool, "thread", (pj_thread_proc *)&thread_proc,
-    //                       NULL,
-    //                       PJ_THREAD_DEFAULT_STACK_SIZE,
-    //                       0,
-    //                       &thread);
-    // if (rc != PJ_SUCCESS)
-    // {
+    rc = pj_thread_create(pool, "thread", (pj_thread_proc *)&thread_proc,
+                          NULL,
+                          PJ_THREAD_DEFAULT_STACK_SIZE,
+                          0,
+                          &thread);
+    if (rc != PJ_SUCCESS)
+    {
         
-    //     error_exit("Error creating worker thread", rc);
-    // };
+        error_exit("Error creating worker thread", rc);
+    };
 
-    //  pj_thread_join(thread);
+     pj_thread_join(thread);
 
 
     rc = pj_thread_create(pool, "network", (pj_thread_proc *)&udp_receive_thread,
@@ -651,6 +701,15 @@ static int pjsua_thread(void){
 
            
         }
+
+        //print uri of remote call
+        if (option[0]== 'u') {
+
+            
+            PJ_LOG(3,(THIS_FILE, "REMOTE URI: %s",current_uri));
+            
+           
+        }
             //make call
     }
 
@@ -672,8 +731,15 @@ int pjsua_interface_init(pthread_cond_t * cond, pthread_mutex_t * lock){
     shutdownLock = lock;
     pickup_call=0;
     status_call=0;
+    current_uri=malloc(CURRENT_URI_SIZE*sizeof(char));
+
     pthread_mutex_init(&call_mutex, NULL);
     pthread_mutex_init(&pickup_call_mutex, NULL);
+    pthread_mutex_init(&status_call_mutex,NULL);
+    pthread_mutex_init(&tx_volume_mutex,NULL);
+    pthread_mutex_init(&current_uri_mutex,NULL);
+    
+
     if(pthread_create(&pjsuaThreadPID, NULL, (void*)&pjsua_thread, NULL) != 0){
         perror("Error in creating ");
         sendShutdownRequest();
@@ -685,8 +751,12 @@ int pjsua_interface_init(pthread_cond_t * cond, pthread_mutex_t * lock){
 
 int pjsua_interface_cleanup(void){
     
+    free(current_uri);
     pthread_mutex_destroy(&call_mutex);    
     pthread_mutex_destroy(&pickup_call_mutex);
+    pthread_mutex_destroy(&status_call_mutex);
+    pthread_mutex_destroy(&tx_volume_mutex);
+    pthread_mutex_destroy(&current_uri_mutex);
     LED_cleanUp();
     if(pthread_join(pjsuaThreadPID, NULL) != 0){
         perror("Error in joining the phsua thread.");
