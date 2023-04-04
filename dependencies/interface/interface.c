@@ -116,7 +116,7 @@ void IFace_updateStatus(int status, char* address) {
     if (status != currentStatus){
         switch (status){
             case NOCALL:
-            LCD_writeMessage(IFace_currentUser->name, IFace_currentUser->sip);
+            //LCD_writeMessage(IFace_currentUser->name, IFace_currentUser->sip);
             break;
             case INCOMING:
             LCD_writeMessage("Call from:", address);

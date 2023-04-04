@@ -1,5 +1,6 @@
 /*
     UDP header by Ryan Tio and Nhi Mai-Do, modified form assignment 3
+    modiefied to work with pjsua by Sanseerat Virk
     Usage / cautions:
         -pthread must be added to the compiler flags. 
 
@@ -22,6 +23,8 @@ int send_info_message(void);
 // Notifies the udp module that a call is in progress
 // Forwards the notification to the web interface
 void udp_notifyCallStarted(char* calleeAddress);
+
+void udp_receive_thread(void *arg);
 
 //Cleanup. Returns -1 if there were any issues closing.
 int udp_cleanup(void);
