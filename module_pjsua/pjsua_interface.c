@@ -9,6 +9,7 @@
 #include "../dependencies/buzzer/buzzer.h"
 #include "../dependencies/LED/led.h"
 #include "../dependencies/ipaddr/ipaddr.h"
+#include "../dependencies/interface/interface.h"
 
 #define THIS_FILE	"pjsuaInterface"
 
@@ -548,7 +549,7 @@ static int pjsua_thread(void){
     //create worker thread thread_proc
     pj_caching_pool cp;
     pj_pool_t *pool;
-    pj_thread_t *thread , *network;
+    pj_thread_t *thread , *network, *interface;
     pj_caching_pool_init(&cp, NULL, 1024);
     pj_status_t rc;
     pool = pj_pool_create(&cp.factory, NULL, 4000, 4000, NULL);
@@ -580,6 +581,18 @@ static int pjsua_thread(void){
         error_exit("Error creating network thread", rc);
     };
     
+    IFace_initialize();
+    rc = pj_thread_create(pool, "interface", (pj_thread_proc *)&IFace_runner,
+                          NULL,
+                          PJ_THREAD_DEFAULT_STACK_SIZE,
+                          0,
+                          &interface);
+
+    if (rc != PJ_SUCCESS)
+    {
+        
+        error_exit("Error creating interface thread", rc);
+    };
   
    
 
@@ -674,6 +687,7 @@ static int pjsua_thread(void){
    
     sendShutdownRequest();
     pj_thread_join(network); 
+    IFace_cleanup(interface);
     pjsua_destroy();
     return 0;
 }
