@@ -1,7 +1,7 @@
 [
     {
-    "name": "Nhi 1",
-    "sipAddress": "sip:nhi@192.168.1.54"
+    "name": "Nhi ",
+    "sipAddress": "sip:nhi@204.23.212.198:5060"
     },
     {
         "name": "Nhi 2",
