@@ -6,6 +6,7 @@
  */
 
 var callInProgress = false;
+var outgoingCall = false; // toggled when we make a call. used to check if a call has been accepted/rejected
 var phoneAlive = false;
 var webAlive = false;
 
@@ -218,7 +219,7 @@ $(document).ready(function() {
 			socket.on('volume', function(result) {
 				if (result.toLowerCase() === "error") {
 					console.log(result);
-h				} 
+				} 
 			});
 		}		
 	});
@@ -290,8 +291,21 @@ function call_status(){
 				setStatusBox(Status.Incoming, result);
 				break;
 			case Status.Ongoing:
+				callInProgress = true;
+				setStatusBox(Status.Ongoing, result);
+				$('#curVolume').val() = result.vol;
+
+				if (outgoingCall) {
+					successToast.options.text = "Call was accepted";
+					successToast.showToast();
+					successToast.options.text = "Success"
+					outgoingCall = false;
+				}
+
+				break;
 			case Status.Outgoing:
 				callInProgress = true;
+				outgoingCall = true;
 				setStatusBox(Status.Ongoing, result);
 				$('#curVolume').val() = result.vol;
 				break;
@@ -302,6 +316,12 @@ function call_status(){
 			case Status.None:
 				callInProgress = false;
 				setStatusBox(Status.None, "");
+				if (outgoingCall) {
+					errorToast.options.text = "Call was rejected."
+					errorToast.showToast();
+					errorToast.options.text = "Error"
+					outgoingCall = false;
+				}
 				break;
 		}
 	})
@@ -367,7 +387,9 @@ function makeCall(callee) {
 			callInProgress = false;
 			console.log(result);
 			// setStatusBox(Status.Error, result);
-		} 	
+		} else {
+			outgoingCall = true;
+		}
 	});
 }
 
