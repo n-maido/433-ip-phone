@@ -692,7 +692,7 @@ static int pjsua_thread(void){
     //pj_thread_join(network); 
     //IFace_endThread();
     //pj_thread_join(interface); 
-    IFace_cleanup();
+    //IFace_cleanup();
     pjsua_destroy();
     return 0;
 }
