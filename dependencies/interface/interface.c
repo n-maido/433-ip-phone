@@ -20,7 +20,7 @@ struct IFace_user {
 
 static struct IFace_user *IFace_currentUser;
 static struct IFace_user *IFace_lastUser;
-static bool IFace_running = false;
+bool IFace_running = false;
 
 static pthread_t tid;
 static pthread_attr_t attr;
@@ -37,7 +37,6 @@ enum IFace_status {
 static enum IFace_status currentStatus = NOCALL;
 
 static struct IFace_user* IFace_createUser(char* username, char* sip);
-static void* IFace_runner(void* arg);
 
 /*int main(){
     IFace_initialize();
@@ -203,7 +202,7 @@ void* IFace_runner(void* arg) {
     return NULL;
 }
 
-void IFace_cleanup(pthread_t threadID) {
+void IFace_cleanup() {
     if (IFace_currentUser == NULL || IFace_lastUser == NULL) {
         printf("\nERROR: INTERFACE NOT INITIALIZED!\n");
         return;
@@ -212,7 +211,7 @@ void IFace_cleanup(pthread_t threadID) {
     //remove thread, delete all users
     IFace_running = false;
 
-    pthread_join(threadID, NULL);
+    //pthread_join(*threadID, NULL);
 
     struct IFace_user *next = IFace_lastUser->prev;
     for(IFace_currentUser = IFace_lastUser; IFace_currentUser != NULL; IFace_currentUser = next){

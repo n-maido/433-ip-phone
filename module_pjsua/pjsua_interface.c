@@ -687,7 +687,9 @@ static int pjsua_thread(void){
    
     sendShutdownRequest();
     pj_thread_join(network); 
-    IFace_cleanup(interface);
+    IFace_running = false;
+    pj_thread_join(interface); 
+    IFace_cleanup();
     pjsua_destroy();
     return 0;
 }
