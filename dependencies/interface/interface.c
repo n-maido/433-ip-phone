@@ -58,6 +58,7 @@ void IFace_initialize() {
     LCD_writeMessage(IFace_currentUser->name, IFace_currentUser->sip);
 
     IFace_addUser("Ryan's BBG", "sip:san@192.168.1.207");
+    IFace_addUser("Misha's BBG", "sip:san@192.168.1.58");
 
     IFace_running = true;
     //pthread_attr_init(&attr);
@@ -111,12 +112,34 @@ void IFace_removeUser(char* sip){
         LCD_writeMessage(IFace_currentUser->name, IFace_currentUser->sip);
     }
 
-    userToDelete->next->prev = userToDelete->prev;
-    userToDelete->prev->next = userToDelete->next;
+    if (userToDelete->next != NULL){
+        userToDelete->next->prev = userToDelete->prev;
+    }
+    if (userToDelete->prev != NULL){
+        userToDelete->prev->next = userToDelete->next;
+    }
 
     free(userToDelete->name);
     free(userToDelete->sip);
     free(userToDelete);
+}
+
+static char* IFace_getName(char* sip) {
+    struct IFace_user *next = IFace_lastUser->prev;
+    struct IFace_user *curr = IFace_lastUser->prev;
+    for(curr = IFace_lastUser; curr != NULL; curr = next){
+        if (strcmp(curr->sip, sip) == 0) {
+            return curr->name;
+        }
+    }
+    return sip;
+}
+
+static char* IFace_extractIp(char* str) {
+    for (int i = 0; i < strlen(str); i++){
+        if (str[i] == '@') return &str[i + 1];
+    }
+    return str;
 }
 
 void IFace_updateStatus() {
@@ -126,7 +149,11 @@ void IFace_updateStatus() {
     }
 
     int status = pjsua_interface_get_status_call();
-    char* address = "123.123.12.1";
+    char* address = (char*)malloc(CURRENT_URI_SIZE);
+    pjsua_interface_get_uri(address);
+
+
+
 
     if (status != currentStatus){
         switch (status){
@@ -135,13 +162,13 @@ void IFace_updateStatus() {
             LCD_writeMessage(IFace_currentUser->name, IFace_currentUser->sip);
             break;
             case INCOMING:
-            LCD_writeMessage("Call from:", address);
+            LCD_writeMessage("Call from:", IFace_extractIp(IFace_getName(address)));
             break;
             case INCALL:
-            LCD_writeMessage("In call with:", address);
+            LCD_writeMessage("In call with:", IFace_extractIp(IFace_getName(address)));
             break;
             case OUTGOING:
-            LCD_writeMessage("Ringing...", address);
+            LCD_writeMessage("Ringing...", IFace_extractIp(IFace_getName(address)));
             break;
             default:
             break;
@@ -150,13 +177,8 @@ void IFace_updateStatus() {
 
         currentStatus = status;
     }
-}
 
-static char* extractIp(char* str) {
-    for (int i = 0; i < strlen(str); i++){
-        if (str[i] == '@') return &str[i + 1];
-    }
-    return str;
+    free(address);
 }
 
 void* IFace_runner(void* arg) {
@@ -197,14 +219,14 @@ void* IFace_runner(void* arg) {
             case LEFT:
                 if (IFace_currentUser->prev != NULL){
                     IFace_currentUser = IFace_currentUser->prev;
-                    LCD_writeMessage(IFace_currentUser->name, extractIp(IFace_currentUser->sip));
+                    LCD_writeMessage(IFace_currentUser->name, IFace_extractIp(IFace_currentUser->sip));
                 }
                 break;
             //Scroll to next contact
             case RIGHT:
                 if (IFace_currentUser->next != NULL){
                     IFace_currentUser = IFace_currentUser->next;
-                    LCD_writeMessage(IFace_currentUser->name, extractIp(IFace_currentUser->sip));
+                    LCD_writeMessage(IFace_currentUser->name, IFace_extractIp(IFace_currentUser->sip));
                 }
                 break;
             //Start call
