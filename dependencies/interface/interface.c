@@ -170,11 +170,8 @@ void IFace_updateStatus() {
 
     int status = pjsua_interface_get_status_call();
 
-
-    pjsua_interface_get_uri(address);
-
-
     if (status != currentStatus){
+        pjsua_interface_get_uri(address);
         switch (status){
             case NOCALL:
             IFace_currentUser = IFace_firstUser;
