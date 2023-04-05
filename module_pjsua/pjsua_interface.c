@@ -480,6 +480,7 @@ static int pjsua_thread(void){
     tx_volume=100;
 
     if (status != PJ_SUCCESS) error_exit("Error adding sound device", status);
+
     /* Get the current input (microphone) volume */
   
     //register without sip server account
