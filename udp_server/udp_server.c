@@ -110,14 +110,14 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         // if ongoing call, get the current volume and mic gain level
         switch (status) {
             case 0: // no call
-                snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d}}\n", status);
+                snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d}}\n", status);
                 break;
             case 1: // incoming call
                 pjsua_interface_get_uri(address);
                 char strippedAddress[CURRENT_URI_SIZE];
                 stripQuotes(address, strippedAddress);
 
-                snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\"}}\n", status, strippedAddress);
+                snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\"}}\n", status, strippedAddress);
                 break;
             case 2:  // call in session, outgoing call
             case 3:
@@ -128,12 +128,12 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
                 stripQuotes(address, strippedAddress);
 
                 int vol = pjsua_interface_get_volume();
-                
-                snprintf(r, 150, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\", \"vol\": %d, \"gain\": %d}}\n", status, strippedAddress, vol, gain);
+
+                snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\", \"vol\": %d, \"gain\": %d}}\n", status, strippedAddress, vol, gain);
                 break;
             }
             default:
-                snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d}}\n", status);
+                snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d}}\n", status);
         }
         return;
     } else if(!strncmp(msg, optionValues[NEW_USER], strlen(optionValues[NEW_USER]))){
