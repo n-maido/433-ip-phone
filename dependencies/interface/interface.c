@@ -20,6 +20,7 @@ struct IFace_user {
 
 static struct IFace_user *IFace_currentUser;
 static struct IFace_user *IFace_lastUser;
+static struct IFace_user *IFace_firstUser;
 static bool IFace_running = false;
 
 static pthread_t tid;
@@ -51,8 +52,9 @@ void IFace_initialize() {
     //create thread, create default user and initialize current / last user, initialize joystick and lcd
     JS_initialize();
     LCD_initialize();
-    IFace_currentUser = IFace_createUser("Scroll <- or ->", "Push in to call");
+    IFace_currentUser = IFace_createUser("   Main Menu   ", "              ->");
     IFace_lastUser = IFace_currentUser;
+    IFace_firstUser = IFace_currentUser;
     LCD_writeMessage(IFace_currentUser->name, IFace_currentUser->sip);
 
     IFace_addUser("Ryan's BBG", "sip:san@192.168.1.207");
@@ -129,6 +131,7 @@ void IFace_updateStatus() {
     if (status != currentStatus){
         switch (status){
             case NOCALL:
+            IFace_currentUser = IFace_firstUser;
             LCD_writeMessage(IFace_currentUser->name, IFace_currentUser->sip);
             break;
             case INCOMING:
@@ -147,6 +150,13 @@ void IFace_updateStatus() {
 
         currentStatus = status;
     }
+}
+
+static char* extractIp(char* str) {
+    for (int i = 0; i < strlen(str); i++){
+        if (str[i] == '@') return &str[i + 1];
+    }
+    return str;
 }
 
 void* IFace_runner(void* arg) {
@@ -187,14 +197,14 @@ void* IFace_runner(void* arg) {
             case LEFT:
                 if (IFace_currentUser->prev != NULL){
                     IFace_currentUser = IFace_currentUser->prev;
-                    LCD_writeMessage(IFace_currentUser->name, IFace_currentUser->sip);
+                    LCD_writeMessage(IFace_currentUser->name, extractIp(IFace_currentUser->sip));
                 }
                 break;
             //Scroll to next contact
             case RIGHT:
                 if (IFace_currentUser->next != NULL){
                     IFace_currentUser = IFace_currentUser->next;
-                    LCD_writeMessage(IFace_currentUser->name, IFace_currentUser->sip);
+                    LCD_writeMessage(IFace_currentUser->name, extractIp(IFace_currentUser->sip));
                 }
                 break;
             //Start call

@@ -17,7 +17,7 @@
 #define SIP_DOMAIN	"192.168.7.2" //make this automatic look into sample app 
 #define SIP_USER_COMPUTER "debian"
 #define SIP_USER_NETWORK  "beagle"
-#define CURRENT_URI_SIZE 1024
+
 static pthread_t pjsuaThreadPID = -1;
 static pthread_cond_t * shutdownRequest = NULL;
 static pthread_mutex_t * shutdownLock = NULL;
@@ -166,8 +166,8 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
     // pj_str_t remote_contact = ci.remote_contact;
     pj_str_t remote_uri = ci.remote_info;
     /* Use the call information */
-    printf("Remote address: %.*s\n", (int)remote_address.slen, remote_address);
-    printf("Remote contact: %.*s\n", (int)remote_contact.slen, remote_contact);
+    // printf("Remote address: %.*s\n", (int)remote_address.slen, remote_address);
+    // printf("Remote contact: %.*s\n", (int)remote_contact.slen, remote_contact);
     printf("Remote URI: %.*s\n", (int)remote_uri.slen, remote_uri);
     memset(current_uri, 0, sizeof(CURRENT_URI_SIZE));
     pthread_mutex_lock(&current_uri_mutex);
@@ -479,6 +479,7 @@ static int pjsua_thread(void){
     {
         pjsua_transport_config cfg;
         pjsua_transport_config_default(&cfg);
+        
         cfg.port = 5060;
         status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &cfg, NULL);
         if (status != PJ_SUCCESS) error_exit("Error creating transport", status);
