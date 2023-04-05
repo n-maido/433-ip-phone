@@ -146,10 +146,14 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         // parse username
         char address[MAX_SIP_ADDRESS_SIZE] = "";
         extractString(msg, DELETE_CONTACT, address);
+        char* tmp = strtok(address, "@");
+        char* ip = strtok(NULL, "@");
 
-        printf("Removing user: %s\n", address);
+        printf("Removing user: %s\n", ip);
 
-        IFace_removeUser(address);
+        IFace_removeUser(ip);
+
+        printf("can we reach?");
 
         strncpy(r, "{\"msgType\":\"delete_contact\", \"content\": \"Success\"}\n", 100);        
     } else if(!strncmp(msg, optionValues[MAKE_CALL], strlen(optionValues[MAKE_CALL]))){
