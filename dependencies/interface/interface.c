@@ -63,6 +63,7 @@ void IFace_initialize() {
     IFace_addUser("Ryan's BBG", "sip:beagle@192.168.1.207");
     IFace_addUser("Misha's BBG", "sip:beagle@192.168.1.58");
     IFace_addUser("Misha's Android", "sip:misha@192.168.1.82");
+    IFace_addUser("San's BBG", "sip:beagle@192.168.1.129");
 
     address = (char*)malloc(CURRENT_URI_SIZE);
     
@@ -246,7 +247,7 @@ void* IFace_runner(void* arg) {
                     int returnStatus = pjsua_interface_make_call(IFace_currentUser->sip);
                     
                     if (returnStatus == 0) {
-                        LCD_writeMessage("Error Calling", "");
+                        LCD_writeMessage("Error Calling", "Try again later");
                     } else {
                         LCD_writeMessage("Calling...", IFace_currentUser->name);
                     }
