@@ -582,7 +582,10 @@ static int pjsua_thread(void){
 
 
     rc = pj_thread_create(pool, "network", (pj_thread_proc *)&udp_receive_thread,
-
+                         NULL,
+                          PJ_THREAD_DEFAULT_STACK_SIZE,
+                          0,
+                          &network);
     
     
     
