@@ -75,6 +75,21 @@ static void extractString(char* msg, UDP_OPTIONS option, char sipAddress[MAX_SIP
     strncpy(sipAddress, msg + startIndex, endIndex);
 }
 
+/**
+ * Removes excess quotation marks from a string
+ * Ensures a properly formatted json object is sent 
+ * to the node server
+*/
+static void stripQuotes(char *address, char *strippedAddress) {
+    int j = 0;
+    for (int i = 0; address[i] != '\0'; i++) {
+        if (address[i] != '"' && address[i] != '\'') {
+            strippedAddress[j++] = strippedAddress[i];
+        }
+    }
+    strippedAddress[j] = '\0'; // terminate the new string
+}
+
 /** 
  * Response messages are json objects in the format: 
  * {
@@ -88,36 +103,26 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
     if(!strncmp(msg, optionValues[CALL_STATUS], strlen(optionValues[CALL_STATUS]))){
         // TODO: get call status from Call module
         // 0 = none, 1 = incoming, 2 = ongoing, 3 = error
-        // int status = 0;
         int status = pjsua_interface_get_status_call();
-        // char* address = (char*) malloc(CURRENT_URI_SIZE);
-        pjsua_interface_get_uri(address);
-
-        // strip quotations
-        char strippedAddress[CURRENT_URI_SIZE];
-        int j = 0;
-        for (int i = 0; address[i] != '\0'; i++) {
-            if (address[i] != '"' && address[i] != '\'') {
-                strippedAddress[j++] = strippedAddress[i];
-            }
-        }
-        strippedAddress[j] = '\0'; // terminate the new string
-
-        printf("cur address: %s\n", strippedAddress);
-
+       
         // if ongoing call, get the current volume and mic gain level
         switch (status) {
             case 0: // no call
                 snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d}}\n", status);
                 break;
             case 1: // incoming call
+                pjsua_interface_get_uri(address);
+                char strippedAddress[CURRENT_URI_SIZE];
+                stripQuotes(address, strippedAddress);
                 snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\"}}\n", status, strippedAddress);
                 break;
             case 2:  // call in session, outgoing call
             case 3:
             {
                 int gain = 10;
-
+                pjsua_interface_get_uri(address);
+                char strippedAddress[CURRENT_URI_SIZE];
+                stripQuotes(address, strippedAddress);
                 // get cur vol
                 int vol = pjsua_interface_get_volume();
                 snprintf(r, 150, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\", \"vol\": %d, \"gain\": %d}}\n", status, strippedAddress, vol, gain);
@@ -126,15 +131,12 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
             default:
                 snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d}}\n", status);
         }
-        // free(address);
-        // memset(address, 0, CURRENT_URI_SIZE);
         return;
     } else if(!strncmp(msg, optionValues[NEW_USER], strlen(optionValues[NEW_USER]))){
         // expects a msg of the format "new_user=<username>"
         // parse username
         char username[MAX_SIP_ADDRESS_SIZE] = "";
         extractString(msg, NEW_USER, username);
-        //TODO: return their sip address?
         strncpy(r, "{\"msgType\":\"new_user\", \"content\": \"Success\"}\n", 100);        
     } else if(!strncmp(msg, optionValues[ADD_CONTACT], strlen(optionValues[ADD_CONTACT]))){
         // expects a msg of the format "add_contact=<name>&<sipAddress>"
@@ -186,8 +188,6 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
     } else if (!strncmp(msg, optionValues[PICK_UP], strlen(optionValues[PICK_UP]))){
         // expects a msg of the format "pick_up n"
         // 1 = pick up, 2 = decline
-        // if we don't need an address to end a call, then delete this section
-
         // parse param
     
         char temp[20] = "";

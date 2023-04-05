@@ -74,6 +74,7 @@ $(document).ready(function() {
 
 	// Hang up a call
 	$('#ongoingHangUpBtn').click(function() {
+		outgoingCall = false;
 		sendCommandViaUDP(`end_call`);
 
 		socket.on('end_call', function(result) {
