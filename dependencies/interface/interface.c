@@ -94,6 +94,10 @@ void IFace_removeUser(char* sip){
 
     struct IFace_user *userToDelete = IFace_lastUser;
     while (strcmp(userToDelete->sip, sip) != 0) {
+        if (userToDelete->prev == NULL) {
+            printf("ERROR: IFace_removeUser(\"%s\") could not find that user to remove\n", sip);
+            return;
+        }
         userToDelete = userToDelete->prev;
     }
 
