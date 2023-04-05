@@ -452,6 +452,33 @@ void pjsua_interface_get_uri(char *buffer){
 
 }
 
+void pjsua_interface_get_uri_alt(char *buffer){
+
+    memset(buffer, 0, sizeof(CURRENT_URI_SIZE));
+    pthread_mutex_lock(&current_uri_mutex);
+    //snprintf(buffer,CURRENT_URI_SIZE,"%s",current_uri);
+    int j=0;
+    for(int i=0;i<CURRENT_URI_SIZE;i++){
+
+        if(current_uri[i] != '<' && current_uri[i] != '>'){
+
+            buffer[j]=current_uri[i];
+            j++;
+        }
+
+        if(current_uri[i] == '>'){
+
+            break;
+
+        }
+    }
+    buffer[j]='\0';
+    pthread_mutex_unlock(&current_uri_mutex);
+
+
+
+}
+
 static int pjsua_thread(void){
 
    
