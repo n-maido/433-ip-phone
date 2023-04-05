@@ -3,6 +3,7 @@
 #include "pjsua_interface.h"
 #include <pjsua-lib/pjsua.h>
 #include <pjlib.h>
+#include <pjsip.h>
 #include "../udp_server/udp_server.h"
 
 #include "../dependencies/utils/util.h"
@@ -133,7 +134,9 @@ static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
     }
 
     buzzer_ring_on();
+    LED_blink(3);
     call_incoming();
+    LED_stopBlink();
     buzzer_ring_off();
 
     /*  answer incoming calls with 200/OK only if pickup value has been changed to 1*/
@@ -162,9 +165,9 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
     pj_str_t remote_address = ci.remote_info;
     pj_str_t remote_contact = ci.remote_contact;
     pj_str_t remote_uri = ci.remote_info;
-
     /* Use the call information */
     printf("Remote address: %.*s\n", (int)remote_address.slen, remote_address);
+    printf("Remote contact: %.*s\n", (int)remote_contact.slen, remote_contact);
     printf("Remote contact: %.*s\n", (int)remote_contact.slen, remote_contact);
     printf("Remote URI: %.*s\n", (int)remote_uri.slen, remote_uri);
     memset(current_uri, 0, sizeof(CURRENT_URI_SIZE));
@@ -424,9 +427,6 @@ static void* thread_proc(){
 }
 
 
-
-
-
 static int pjsua_thread(void){
 
    
@@ -458,6 +458,8 @@ static int pjsua_thread(void){
         status = pjsua_init(&cfg, &log_cfg, NULL);
         if (status != PJ_SUCCESS) error_exit("Error in pjsua_init()", status);
     }
+
+	
 
     /* Add UDP transport. */
     {
@@ -496,6 +498,9 @@ static int pjsua_thread(void){
     
     */ 
    char buffer[16];//max ip lenght ipv4
+
+   pjsua_acc_config network_account_config;
+   pjsua_acc_config_default(&network_account_config);
    strcpy(buffer,"e");
    IP_get_eth0_ip(buffer);
    if(buffer[0]=='e'){
@@ -504,19 +509,22 @@ static int pjsua_thread(void){
     PJ_LOG(3,(THIS_FILE,"ETH 0 ASSINGED IP ADDRESS: %s \n",buffer));
 
 
-    pjsua_acc_config network_account_config;
-    pjsua_acc_config_default(&network_account_config);
     char uri_buffer[1024];
-    sprintf(uri_buffer,"sip:%s@%s",SIP_USER_NETWORK,buffer);
-    //network_account_config.id = pj_str("sip:debian1@192.168.1.129");
-    network_account_config.id = pj_str(uri_buffer);
+    //sprintf(uri_buffer,"sip:%s@%s",SIP_USER_NETWORK,buffer);
+    network_account_config.id = pj_str("sip:san@192.168.1.129");
+    //network_account_config.id = pj_str(uri_buffer);
     status = pjsua_acc_add(&network_account_config, PJ_TRUE, &network_account_id);
     if (status != PJ_SUCCESS)  error_exit("Error second account", status);
 
 
    }
-
-    
+	pj_str_t tmpstr;
+    status = pjsua_codec_set_priority(pj_cstr(&tmpstr,"speex/16000"),0);
+	if(status != PJ_SUCCESS){error_exit("Error disabling speex/16000", status);}
+	status = pjsua_codec_set_priority(pj_cstr(&tmpstr,"speex/8000"),0);
+	if(status != PJ_SUCCESS){error_exit("Error disabling speex/8000", status);}
+	status = pjsua_codec_set_priority(pj_cstr(&tmpstr,"pcma"),255);
+	if(status != PJ_SUCCESS){error_exit("Error updating pcma", status);}
     /* Register to SIP server by creating SIP account. */
     {
         // pjsua_acc_config cfg;
@@ -569,11 +577,20 @@ static int pjsua_thread(void){
 
      pj_thread_join(thread);
 
-    //threads 
+
+
+
+
+    rc = pj_thread_create(pool, "network", (pj_thread_proc *)&udp_receive_thread,
+                         NULL,
+                          PJ_THREAD_DEFAULT_STACK_SIZE,
+                          0,
+                          &network);
     
     
     
     rc = pj_thread_create(pool, "interface", (pj_thread_proc *)&IFace_runner,
+
                           NULL,
                           PJ_THREAD_DEFAULT_STACK_SIZE,
                           0,
@@ -585,11 +602,6 @@ static int pjsua_thread(void){
         error_exit("Error creating interface thread", rc);
     };
 
-    rc = pj_thread_create(pool, "network", (pj_thread_proc *)&udp_receive_thread,
-                          NULL,
-                          PJ_THREAD_DEFAULT_STACK_SIZE,
-                          0,
-                          &network);
 
     if (rc != PJ_SUCCESS)
     {
@@ -644,10 +656,10 @@ static int pjsua_thread(void){
      
         if (option[0]== 'x') {
             
-            // pj_str_t uri = pj_str("sip:ryan@192.168.1.207");
+            pj_str_t uri = pj_str("sip:ryan@192.168.1.207");
 
-            // status = pjsua_call_make_call(acc_id2, &uri, 0, NULL, NULL, NULL);
-            // if (status != PJ_SUCCESS) error_exit("Error making call", status);
+            //status = pjsua_call_make_call(network_id, &uri, 0, NULL, NULL, NULL);
+            if (status != PJ_SUCCESS) error_exit("Error making call", status);
 
             if(pjsua_interface_make_callO1("sip:ryan@192.168.1.207")){
 
@@ -683,6 +695,8 @@ static int pjsua_thread(void){
            
         }
             //make call
+
+        sleepMs(200);
     }
 
     /* Destroy pjsua */
@@ -721,7 +735,7 @@ int pjsua_interface_init(pthread_cond_t * cond, pthread_mutex_t * lock){
         sendShutdownRequest();
         return -1;
     }
-    LED_startUp();
+   
     return 1;
 }
 
@@ -733,7 +747,6 @@ int pjsua_interface_cleanup(void){
     pthread_mutex_destroy(&status_call_mutex);
     pthread_mutex_destroy(&tx_volume_mutex);
     pthread_mutex_destroy(&current_uri_mutex);
-    LED_cleanUp();
     if(pthread_join(pjsuaThreadPID, NULL) != 0){
         perror("Error in joining the phsua thread.");
     }
