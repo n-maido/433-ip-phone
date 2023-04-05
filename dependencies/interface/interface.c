@@ -62,7 +62,7 @@ void IFace_initialize() {
 
     IFace_addUser("Ryan's BBG", "sip:beagle@192.168.1.207");
     IFace_addUser("Misha's BBG", "sip:beagle@192.168.1.58");
-    IFace_addUser("Misha's Android", "sip:misha@192.168.1.82");
+    IFace_addUser("Misha's Android", "sip:misha@192.168.1.82:57440");
     IFace_addUser("San's BBG", "sip:beagle@192.168.1.129");
     IFace_addUser("Nhi's BBG", "sip:beagle@192.168.1.5");
 
@@ -86,14 +86,34 @@ static struct IFace_user* IFace_createUser(char* username, char* sip){
 
     return newUser;
 }
+static struct IFace_user* IFace_findUser(char* sip) {
+        struct IFace_user *curr = IFace_lastUser;
+    while (strcmp(curr->sip, sip) != 0) {
+        if (curr->prev == NULL) {
+            return NULL;
+        }
+        curr = curr->prev;
+    }
+    return curr;
+}
 
-void IFace_addUser(char* username, char* sip){
+
+void IFace_addUser(char* username, char* sip) {
     if (IFace_currentUser == NULL || IFace_lastUser == NULL) {
         printf("\nERROR: INTERFACE NOT INITIALIZED!\n");
         return;
     }
 
     struct IFace_user *newUser = IFace_createUser(username, sip);
+     
+    if (IFace_findUser(sip) != NULL) {
+        printf("\nERROR: Tried to add a user into interface that already exists.\n");
+        free(newUser->name);
+        free(newUser->sip);
+        free(newUser);
+        return;
+    }
+
     IFace_lastUser->next = newUser;
     newUser->prev = IFace_lastUser;
     IFace_lastUser = newUser;
@@ -105,14 +125,11 @@ void IFace_removeUser(char* sip){
         return;
     }
 
-    struct IFace_user *userToDelete = IFace_lastUser;
-    while (strcmp(userToDelete->sip, sip) != 0) {
-        if (userToDelete->prev == NULL) {
+    struct IFace_user *userToDelete = IFace_findUser(sip);
+        if (userToDelete == NULL) {
             printf("ERROR: IFace_removeUser(\"%s\") could not find that user to remove\n", sip);
             return;
         }
-        userToDelete = userToDelete->prev;
-    }
 
     //Update screen if current user is displayed
     if (strcmp(sip, IFace_currentUser->sip) == 0) {
@@ -133,14 +150,9 @@ void IFace_removeUser(char* sip){
 }
 
 static char* IFace_getName(char* sip) {
-    struct IFace_user *curr = IFace_lastUser;
-    while (strcmp(curr->sip, sip) != 0) {
-        if (curr->prev == NULL) {
-            return sip;
-        }
-        curr = curr->prev;
-    }
-    return curr->name;
+    struct IFace_user *user = IFace_findUser(sip);
+    if (user == NULL) return sip;
+    return user->name;
 }
 
 static char* IFace_extractIp(char* str) {
@@ -186,6 +198,10 @@ void IFace_updateStatus() {
     }
 }
 
+int abs (int n){
+    return n + 2 * n * (n < 0);
+}
+
 void* IFace_runner(void* arg) {
     if (IFace_currentUser == NULL || IFace_lastUser == NULL) {
         printf("\nERROR: INTERFACE NOT INITIALIZED!\n");
@@ -203,7 +219,7 @@ void* IFace_runner(void* arg) {
             sleepMs(100);
             IFace_updateStatus();
             int volume = POT_readValue();
-            if (volume != lastVolume){
+            if (abs(volume - lastVolume) > 2){
                 pjsua_interface_set_volume(volume);
                 lastVolume = volume;
             }
