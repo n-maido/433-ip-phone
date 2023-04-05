@@ -54,7 +54,7 @@
 
 #ifndef PJSUA_INTERFACE
 #define PJSUA_INTERFACE
-
+#define CURRENT_URI_SIZE 1024
 #include <pthread.h>
 
 //Set up pjsua and thread. Returns -1 upon failure.
