@@ -24,7 +24,6 @@ void init(void){
     //allow any of the modules to shutdown the program if it breaks.
     udp_init(&shutdownCondition, &conditionMutex);
     pjsua_interface_init(&shutdownCondition, &conditionMutex);
-    IFace_initialize();
     buzzer_init();
 }
 
@@ -32,7 +31,6 @@ void init(void){
 static void shutdown(void){
     udp_cleanup();
     pjsua_interface_cleanup();
-    IFace_cleanup();
     buzzer_cleanup();
 }
 
