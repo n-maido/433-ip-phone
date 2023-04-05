@@ -6,6 +6,7 @@
  */
 
 var callInProgress = false;
+var outgoingCall = false; // toggled when we make a call. used to check if a call has been accepted/rejected
 var phoneAlive = false;
 var webAlive = false;
 
@@ -73,56 +74,41 @@ $(document).ready(function() {
 
 	// Hang up a call
 	$('#ongoingHangUpBtn').click(function() {
-		// do we need to supply addresses to hang up a call?
-		// remove if not needed
-		var calleeText = $('#ongoingText').text().split(" ");
-		console.log(`calleeText = ${calleeText}`);
-		var callee = calleeText[1];
-
-		sendCommandViaUDP(`end_call=${callee}`);
+		sendCommandViaUDP(`end_call`);
 
 		socket.on('end_call', function(result) {
 			console.log(result);
 			if (result.toLowerCase() === "error") {
-				callInProgress = true;
-				setStatusBox(Status.Error, result);
-			} 	
+				// callInProgress = true;
+				console.log(result);
+				// setStatusBox(Status.Error, result);
+			}
 		});
 	});
 
 	$('#incomingHangUpBtn').click(function() {
-		// do we need to supply addresses to hang up a call?
-		// remove if not needed
-		// var calleeText = $('#incomingText').text().split(" ");
-		// console.log(`calleeText = ${calleeText}`);
-		// var callee = calleeText[3];
-
 		sendCommandViaUDP(`pick_up 2`); //should we use end_call or have a new cmd reject call?
 
 		socket.on('pick_up', function(result) {
 			if (result.toLowerCase() === "error") {
-				callInProgress = true;
-				setStatusBox(Status.Error, result);
-			} 	
+				// callInProgress = true;
+				console.log(result);
+				// setStatusBox(Status.Error, result);
+			}
 		});
 	});
 
 	// Pick up an incoming call
 	$('#incomingPickUpBtn').click(function() {
-		// do we need to supply addresses to hang up a call?
-		// remove if not needed
-		// var calleeText = $('#incomingText').text().split(" ");
-		// console.log(`calleeText = ${calleeText}`);
-		// var callee = calleeText[3];
-
 		sendCommandViaUDP(`pick_up 1`); //should we use end_call or have a new cmd reject call?
 
 		socket.on('pick_up', function(result) {
 			console.log(result);
 			if (result.toLowerCase() === "error") {
-				callInProgress = true;
-				setStatusBox(Status.Error, result);
-			} 	
+				// callInProgress = false;
+				console.log(result);
+				// setStatusBox(Status.Error, result);
+			}
 		});
 	});
 
@@ -226,8 +212,7 @@ $(document).ready(function() {
 			sendCommandViaUDP(`set_volume ${volume}`);
 			socket.on('volume', function(result) {
 				if (result.toLowerCase() === "error") {
-					callInProgress = true;
-					setStatusBox(Status.Error, result);
+					console.log(result);
 				} 
 			});
 		}		
@@ -241,8 +226,7 @@ $(document).ready(function() {
 			sendCommandViaUDP(`set_volume ${volume}`);
 			socket.on('volume', function(result) {
 				if (result.toLowerCase() === "error") {
-					callInProgress = true;
-					setStatusBox(Status.Error, result);
+					console.log(result);
 				} 
 			});
 		}
@@ -257,8 +241,7 @@ $(document).ready(function() {
 			sendCommandViaUDP(`set_gain ${gain}`);
 			socket.on('gain', function(result) {
 				if (result.toLowerCase() === "error") {
-					callInProgress = true;
-					setStatusBox(Status.Error, result);
+					console.log(result);
 				} 
 			});
 		}
@@ -272,8 +255,7 @@ $(document).ready(function() {
 			sendCommandViaUDP(`set_gain ${gain}`);
 			socket.on('gain', function(result) {
 				if (result.toLowerCase() === "error") {
-					callInProgress = true;
-					setStatusBox(Status.Error, result);
+					console.log(result);
 				} 
 			});
 		}
@@ -303,9 +285,23 @@ function call_status(){
 				setStatusBox(Status.Incoming, result);
 				break;
 			case Status.Ongoing:
-			case Status.Outgoing:
 				callInProgress = true;
 				setStatusBox(Status.Ongoing, result);
+				$('#curVolume').val(result.vol);
+
+				if (outgoingCall) {
+					successToast.options.text = "Call was accepted";
+					successToast.showToast();
+					successToast.options.text = "Success"
+					outgoingCall = false;
+				}
+
+				break;
+			case Status.Outgoing:
+				callInProgress = true;
+				outgoingCall = true;
+				setStatusBox(Status.Ongoing, result);
+				$('#curVolume').val(result.vol);
 				break;
 			case Status.Error:
 				callInProgress = false;
@@ -314,6 +310,12 @@ function call_status(){
 			case Status.None:
 				callInProgress = false;
 				setStatusBox(Status.None, "");
+				if (outgoingCall) {
+					errorToast.options.text = "Call was rejected."
+					errorToast.showToast();
+					errorToast.options.text = "Error"
+					outgoingCall = false;
+				}
 				break;
 		}
 	})
@@ -376,10 +378,12 @@ function makeCall(callee) {
 	socket.on('make_call', function(result) {
 		console.log(result);
 		if (result.toLowerCase() === "error") {
-			callInProgress = false;
-			// TODO: set status box to none and show error toast instead?
-			setStatusBox(Status.Error, result);
-		} 	
+			// callInProgress = false;
+			console.log(result);
+			// setStatusBox(Status.Error, result);
+		} else {
+			outgoingCall = true;
+		}
 	});
 }
 
