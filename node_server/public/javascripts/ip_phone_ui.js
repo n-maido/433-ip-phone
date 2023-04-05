@@ -87,12 +87,6 @@ $(document).ready(function() {
 	});
 
 	$('#incomingHangUpBtn').click(function() {
-		// do we need to supply addresses to hang up a call?
-		// remove if not needed
-		// var calleeText = $('#incomingText').text().split(" ");
-		// console.log(`calleeText = ${calleeText}`);
-		// var callee = calleeText[3];
-
 		sendCommandViaUDP(`pick_up 2`); //should we use end_call or have a new cmd reject call?
 
 		socket.on('pick_up', function(result) {
@@ -293,7 +287,7 @@ function call_status(){
 			case Status.Ongoing:
 				callInProgress = true;
 				setStatusBox(Status.Ongoing, result);
-				$('#curVolume').val() = result.vol;
+				$('#curVolume').val(result.vol);
 
 				if (outgoingCall) {
 					successToast.options.text = "Call was accepted";
@@ -307,7 +301,7 @@ function call_status(){
 				callInProgress = true;
 				outgoingCall = true;
 				setStatusBox(Status.Ongoing, result);
-				$('#curVolume').val() = result.vol;
+				$('#curVolume').val(result.vol);
 				break;
 			case Status.Error:
 				callInProgress = false;
