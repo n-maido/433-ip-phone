@@ -407,8 +407,8 @@ function setStatusBox(status, data) {
 			console.log("showing incoming status");
 			$('#ongoingBox').hide();
 			$('#errorBox').hide();
-			// $('#incomingText').text(`Incoming call from ${data.address}`);
-			$('#incomingText').text(`Incoming call`);
+			$('#incomingText').text(`Incoming call from ${data.address}`);
+			// $('#incomingText').text(`Incoming call`);
 			$('#incomingBox').show();
 			break;
 		case Status.Outgoing:
