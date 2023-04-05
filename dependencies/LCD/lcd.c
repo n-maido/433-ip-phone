@@ -110,19 +110,26 @@ void LCD_clearMessage()
 
 }
 
+static int writing = 0;
 void LCD_writeMessage(char* msg1, char* msg2)
 {   
+    const int LINE_SIZE = 16;
+    while (writing == 1) {
+        LCD_delayFor(1, 0);
+    }
+    writing = 1;
     LCD_clearMessage();
     //printf("Writing \"%s\" to LCD...\n", msg1);
-    for (int i = 0; i < strlen(msg1); i++) {
+    for (int i = 0; i < strlen(msg1) && i < LINE_SIZE; i++) {
         LCD_writeChar(msg1[i]);
     }
     for (int i = 0; i < 40 - strlen(msg1); i++) {
         LCD_writeChar(' ');
     }
-    for (int i = 0; i < strlen(msg2); i++) {
+    for (int i = 0; i < strlen(msg2) && i < LINE_SIZE; i++) {
         LCD_writeChar(msg2[i]);
     }
+    writing = 0;
 }
 
 static void LCD_writeChar(char c)

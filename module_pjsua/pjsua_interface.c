@@ -482,6 +482,7 @@ static int pjsua_thread(void){
     tx_volume=100;
 
     if (status != PJ_SUCCESS) error_exit("Error adding sound device", status);
+
     /* Get the current input (microphone) volume */
   
     //register without sip server account
@@ -574,21 +575,14 @@ static int pjsua_thread(void){
 
 
 
-    rc = pj_thread_create(pool, "network", (pj_thread_proc *)&udp_receive_thread,
-                          NULL,
-                          PJ_THREAD_DEFAULT_STACK_SIZE,
-                          0,
-                          &network);
 
-    if (rc != PJ_SUCCESS)
-    {
-        
-        error_exit("Error creating network thread", rc);
-    };
+    rc = pj_thread_create(pool, "network", (pj_thread_proc *)&udp_receive_thread,
+
     
     
     
     rc = pj_thread_create(pool, "interface", (pj_thread_proc *)&IFace_runner,
+
                           NULL,
                           PJ_THREAD_DEFAULT_STACK_SIZE,
                           0,
@@ -598,6 +592,13 @@ static int pjsua_thread(void){
     {
         
         error_exit("Error creating interface thread", rc);
+    };
+
+
+    if (rc != PJ_SUCCESS)
+    {
+        
+        error_exit("Error creating network thread", rc);
     };
   
    
