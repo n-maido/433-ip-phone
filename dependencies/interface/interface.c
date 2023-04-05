@@ -155,6 +155,7 @@ void IFace_updateStatus() {
 
     int status = pjsua_interface_get_status_call();
 
+
     pjsua_interface_get_uri(address);
 
 
@@ -196,6 +197,7 @@ void* IFace_runner(void* arg) {
         while (input == NONE && IFace_running) {
             sleepMs(100);
             IFace_updateStatus();
+
             input = JS_read();
         }
 
@@ -234,8 +236,13 @@ void* IFace_runner(void* arg) {
             case IN:
                 if (IFace_currentUser->prev != NULL){
                     printf("Calling user '%s' at %s\n", IFace_currentUser->name, IFace_currentUser->sip);
-                    pjsua_interface_make_call(IFace_currentUser->sip);
-                    LCD_writeMessage("Calling...", IFace_currentUser->name);
+                    int returnStatus = pjsua_interface_make_call(IFace_currentUser->sip);
+                    
+                    if (returnStatus == 0) {
+                        LCD_writeMessage("Error Calling", "");
+                    } else {
+                        LCD_writeMessage("Calling...", IFace_currentUser->name);
+                    }
                 }
                 break;
             default:
