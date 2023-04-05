@@ -198,6 +198,7 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
             pthread_mutex_unlock(&status_call_mutex);
 
             PJ_LOG(3,(THIS_FILE, "free to make and accept calls, no call in session"));
+            LED_turnOff();
         }
 
     
@@ -205,6 +206,9 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
         //this pick value is only modified once since only one call can be in session;
         if(ci.state == PJSIP_INV_STATE_CONFIRMED){
 
+            buzzer_ring_off();
+            LED_stopBlink();
+            LED_turnOn();
             pthread_mutex_lock(&status_call_mutex);
             status_call=2;
             pthread_mutex_unlock(&status_call_mutex);
@@ -221,7 +225,9 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
     }
 
     if(ci.state == PJSIP_INV_STATE_CALLING){
-
+        
+        buzzer_ring(2);
+        LED_blink(2);
         pthread_mutex_lock(&status_call_mutex);
         status_call=3;
         pthread_mutex_unlock(&status_call_mutex);
