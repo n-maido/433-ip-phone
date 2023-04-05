@@ -10,11 +10,12 @@
 #include <pthread.h>
 #include <pjsua-lib/pjsua.h>
 #include <pjlib.h>
-#define THIS_FILE   "udp_server"
+#define THIS_FILE  "udp_server"
 
 #include "udp_server.h"
 #include "../module_pjsua/pjsua_interface.h"
 #include "../dependencies/interface/interface.h"
+#include "../dependencies/utils/util.h"
 
 #define PORT 11037
 //predefined length in assignment spec for UDP packet
@@ -90,7 +91,7 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         int status = pjsua_interface_get_status_call();
         char* address = "sip@sip:123.123.12.1";
 
-        IFace_updateStatus(status, address);
+        //IFace_updateStatus(status, address);
 
         // if ongoing call, get the current volume and mic gain level
         switch (status) {
@@ -139,6 +140,7 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         printf("new contact: %s, %s\n", name, ip);
         IFace_addUser(name, ip);
 
+
         strncpy(r, "{\"msgType\":\"add_contact\", \"content\": \"Success\"}\n", 100);
 
     } else if(!strncmp(msg, optionValues[DELETE_CONTACT], strlen(optionValues[DELETE_CONTACT]))){
@@ -153,7 +155,9 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
 
         IFace_removeUser(ip);
 
+
         printf("can we reach?");
+
 
         strncpy(r, "{\"msgType\":\"delete_contact\", \"content\": \"Success\"}\n", 100);        
     } else if(!strncmp(msg, optionValues[MAKE_CALL], strlen(optionValues[MAKE_CALL]))){
@@ -308,6 +312,8 @@ void udp_receive_thread(void *arg){
             sendto(udpSocket, "", strlen(""), 0, (struct sockaddr*) &remote_sin, sin_len);
             break;
         }
+
+        sleepMs(100);
         
     }
     return;

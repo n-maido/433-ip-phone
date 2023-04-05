@@ -23,12 +23,14 @@ int main(){
         // sleepMs(100);
         // setAllLEDsTimer();
     LED_startUp();
+    //LED_turnOff();
     // setAllLEDSNone();
     // led_blinkAll(3, 1000);
     LED_blink(8);
     sleepMs(5000);
     LED_stopBlink();
     sleepMs(5000);
+    LED_turnOff();
     LED_cleanUp();
     // }
     
