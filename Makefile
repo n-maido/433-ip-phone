@@ -19,7 +19,8 @@ dependencies/LCD/lcd.c \
 dependencies/LCD/gpio.c \
 dependencies/joystick/joystick.c \
 dependencies/interface/interface.c \
-dependencies/ipaddr/ipaddr.c
+dependencies/ipaddr/ipaddr.c \
+dependencies/pot/pot.c
 
 PUBDIR = $(HOME)/cmpt433/public/myApps
 OUTDIR = $(PUBDIR)

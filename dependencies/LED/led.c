@@ -10,8 +10,8 @@
 #define GPIO_EXPORT_DIRECTORY "/sys/class/gpio/export"
 #define GPIO_NUMBER_DIRECTORY GPIO_DIR "49/"
 #define GPIO_NUMBER "49"
-#define LED_ON "1"
-#define LED_OFF "0"
+#define LED_ON "0"
+#define LED_OFF "1"
 #define TRUE (1 == 1)
 #define FALSE (1 != 1)
 
