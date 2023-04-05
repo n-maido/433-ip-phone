@@ -32,6 +32,7 @@ static int32_t udpSocket = 0;
 static bool waitForMessages = false;
 static pthread_cond_t * shutdownRequest = NULL;
 static pthread_mutex_t * shutdownLock = NULL;
+static char *address;
 
 typedef enum {
     CALL_STATUS = 0,
@@ -89,7 +90,9 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         // 0 = none, 1 = incoming, 2 = ongoing, 3 = error
         // int status = 0;
         int status = pjsua_interface_get_status_call();
-        char* address = "sip@sip:123.123.12.1";
+        // char* address = (char*) malloc(CURRENT_URI_SIZE);
+        pjsua_interface_get_uri(address);
+        printf("cur address: %s\n", address);
 
         // if ongoing call, get the current volume and mic gain level
         switch (status) {
@@ -103,7 +106,6 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
             case 3:
             {
                 int gain = 10;
-                //TODO: get cur address
 
                 // get cur vol
                 int vol = pjsua_interface_get_volume();
@@ -113,15 +115,13 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
             default:
                 snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d}}\n", status);
         }
+        // free(address);
         return;
     } else if(!strncmp(msg, optionValues[NEW_USER], strlen(optionValues[NEW_USER]))){
         // expects a msg of the format "new_user=<username>"
         // parse username
         char username[MAX_SIP_ADDRESS_SIZE] = "";
         extractString(msg, NEW_USER, username);
-
-        printf("new user joined: %s\n", username);
-
         //TODO: return their sip address?
         strncpy(r, "{\"msgType\":\"new_user\", \"content\": \"Success\"}\n", 100);        
     } else if(!strncmp(msg, optionValues[ADD_CONTACT], strlen(optionValues[ADD_CONTACT]))){
@@ -132,11 +132,8 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
 
         char* name = strtok(contact, "&");
         char* sipAddress = strtok(NULL, "&");
-        char* tmp = strtok(sipAddress, "@");
-        char* ip = strtok(NULL, "@");
 
-        printf("new contact: %s, %s\n", name, ip);
-        IFace_addUser(name, ip);
+        IFace_addUser(name, sipAddress);
 
 
         strncpy(r, "{\"msgType\":\"add_contact\", \"content\": \"Success\"}\n", 100);
@@ -146,16 +143,8 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         // parse username
         char address[MAX_SIP_ADDRESS_SIZE] = "";
         extractString(msg, DELETE_CONTACT, address);
-        char* tmp = strtok(address, "@");
-        char* ip = strtok(NULL, "@");
 
-        printf("Removing user: %s\n", ip);
-
-        IFace_removeUser(ip);
-
-
-        printf("can we reach?");
-
+        IFace_removeUser(address);
 
         strncpy(r, "{\"msgType\":\"delete_contact\", \"content\": \"Success\"}\n", 100);        
     } else if(!strncmp(msg, optionValues[MAKE_CALL], strlen(optionValues[MAKE_CALL]))){
@@ -165,9 +154,6 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         char calleeAddress[MAX_SIP_ADDRESS_SIZE] = "";
         extractString(msg, MAKE_CALL, calleeAddress);
 
-        printf("starting call with address %s\n", calleeAddress);
-
-        // TODO: call Call module's calling func and process return val.
         bool success = pjsua_interface_make_call(calleeAddress);
         if (!success){
             strncpy(r, "{\"msgType\":\"make_call\", \"content\": \"Error\"}\n", 100);
@@ -176,7 +162,6 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
             snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"make_call\", \"content\": \"Success\"}");
         }
     } else if (!strncmp(msg, optionValues[END_CALL], strlen(optionValues[END_CALL]))){
-        printf("ending call\n");
         int success = pjsua_interface_hang_up_call();
 
         if (success){
@@ -192,14 +177,13 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         // if we don't need an address to end a call, then delete this section
 
         // parse param
-        // char pickUp[MAX_SIP_ADDRESS_SIZE] = "";
-        // extractString(msg, PICK_UP, pickUp);
+    
         char temp[20] = "";
         int pickUp = -1;
         sscanf(msg, "%s %d", temp, &pickUp);
 
-        if (pickUp != 1 || pickUp != 2) {
-            snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"pick_up\", \"content\": \"Error\"}\n");
+        if (pickUp != 1 && pickUp != 2) {
+            snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"pick_up\", \"content\": \"Error: Must be 1 or 2\"}\n");
             return;
         }
 
@@ -207,7 +191,7 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         if (pickUpResult){
             strncpy(r, "{\"msgType\":\"pick_up\", \"content\": \"Success\"}\n", 100);
         }else{
-            snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"pick_up\", \"content\": \"Error\"}\n");
+            snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"pick_up\", \"content\": \"Error: Can't pick up\"}\n");
         }
         return;
        
@@ -216,7 +200,6 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         char temp[20] = "";
         int volume = -1;
         sscanf(msg, "%s %d", temp, &volume);
-        printf("setting volume to %d\n", volume);
 
         if(volume < 0 || volume > 100){
             snprintf(r, 100, "{\"msgType\":\"volume\", \"content\": \"Error: Invalid volume of %d.\"}\n", volume);
@@ -231,7 +214,6 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         char temp[20] = "";
         int gain = -1;
         sscanf(msg, "%s %d", temp, &gain);
-        printf("setting gain to %d\n", gain);
 
         if(gain < 0 || gain > 100){
             snprintf(r, 100, "{\"msgType\":\"gain\", \"content\": \"Error: Invalid gain of %d.\"}\n", gain);
@@ -311,7 +293,7 @@ void udp_receive_thread(void *arg){
             break;
         }
 
-        sleepMs(100);
+        // sleepMs(100);
         
     }
     return;
@@ -345,6 +327,7 @@ int udp_init(pthread_cond_t * cond, pthread_mutex_t * lock){
     }
 
     waitForMessages = true;
+    address = (char*) malloc(CURRENT_URI_SIZE);
     // if(pthread_create(&udpThreadPID, NULL, (void*)&udp_receive_thread, NULL) != 0){
     //     perror("Error in creating udp receiving thread.");
     //     sendShutdownRequest();
@@ -367,5 +350,6 @@ int udp_cleanup(void){
     //     perror("Error in joining the UDP thread.");
     // }
     close(udpSocket);
+    free(address);
     return 1;
 }

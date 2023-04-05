@@ -90,8 +90,8 @@ $(document).ready(function() {
 		sendCommandViaUDP(`pick_up 2`); //should we use end_call or have a new cmd reject call?
 
 		socket.on('pick_up', function(result) {
-			if (result.toLowerCase() === "error") {
-				// callInProgress = true;
+			if (result.toLowerCase() !== "success") {
+				// callInProgress = false;
 				console.log(result);
 				// setStatusBox(Status.Error, result);
 			}
@@ -100,11 +100,12 @@ $(document).ready(function() {
 
 	// Pick up an incoming call
 	$('#incomingPickUpBtn').click(function() {
+		console.log("picking up call");
 		sendCommandViaUDP(`pick_up 1`); //should we use end_call or have a new cmd reject call?
 
 		socket.on('pick_up', function(result) {
 			console.log(result);
-			if (result.toLowerCase() === "error") {
+			if (result.toLowerCase() !== "success") {
 				// callInProgress = false;
 				console.log(result);
 				// setStatusBox(Status.Error, result);
@@ -405,11 +406,13 @@ function setStatusBox(status, data) {
 			console.log("showing incoming status");
 			$('#ongoingBox').hide();
 			$('#errorBox').hide();
-			$('#incomingText').text(`Incoming call from ${data.address}`);
+			// $('#incomingText').text(`Incoming call from ${data.address}`);
+			$('#incomingText').text(`Incoming call`);
 			$('#incomingBox').show();
 			break;
+		case Status.Outgoing:
 		case Status.Ongoing:
-			$('#incoming').hide();
+			$('#incomingBox').hide();
 			$('#errorBox').hide();
 			$('#ongoingText').text(`Calling ${data.address}`);
 			$('#curVolume').val(data.vol);
