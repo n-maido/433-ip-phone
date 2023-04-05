@@ -164,9 +164,9 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
     pj_str_t remote_address = ci.remote_info;
     pj_str_t remote_contact = ci.remote_contact;
     pj_str_t remote_uri = ci.remote_info;
-
     /* Use the call information */
     printf("Remote address: %.*s\n", (int)remote_address.slen, remote_address);
+    printf("Remote contact: %.*s\n", (int)remote_contact.slen, remote_contact);
     printf("Remote contact: %.*s\n", (int)remote_contact.slen, remote_contact);
     printf("Remote URI: %.*s\n", (int)remote_uri.slen, remote_uri);
     memset(current_uri, 0, sizeof(CURRENT_URI_SIZE));
