@@ -406,11 +406,13 @@ function setStatusBox(status, data) {
 			console.log("showing incoming status");
 			$('#ongoingBox').hide();
 			$('#errorBox').hide();
-			$('#incomingText').text(`Incoming call from ${data.address}`);
+			// $('#incomingText').text(`Incoming call from ${data.address}`);
+			$('#incomingText').text(`Incoming call`);
 			$('#incomingBox').show();
 			break;
+		case Status.Outgoing:
 		case Status.Ongoing:
-			$('#incoming').hide();
+			$('#incomingBox').hide();
 			$('#errorBox').hide();
 			$('#ongoingText').text(`Calling ${data.address}`);
 			$('#curVolume').val(data.vol);
