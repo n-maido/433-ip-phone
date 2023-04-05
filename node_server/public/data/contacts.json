@@ -1,10 +1,1 @@
-[
-    {
-    "name": "Nhi ",
-    "sipAddress": "sip:nhi@207.23.211.186:5060"
-    },
-    {
-        "name": "Nhi 2",
-        "sipAddress": "sip:nhi@192.168.1.55"
-    }
-]
+[{"name":"Nhi ","sipAddress":"sip:nhi@207.23.211.186:5060"},{"name":"Nhi 2","sipAddress":"sip:nhi@192.168.1.55"}]
