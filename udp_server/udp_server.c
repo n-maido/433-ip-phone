@@ -89,7 +89,10 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         // 0 = none, 1 = incoming, 2 = ongoing, 3 = error
         // int status = 0;
         int status = pjsua_interface_get_status_call();
-        char* address = "sip@sip:123.123.12.1";
+        // char* address = "sip@sip:123.123.12.1";
+        char* address = (char*) malloc(CURRENT_URI_SIZE);
+        pjsua_interface_get_uri(address);
+        printf("cur address: %s\n", address);
 
         // if ongoing call, get the current volume and mic gain level
         switch (status) {
@@ -105,6 +108,7 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
                 int gain = 10;
                 //TODO: get cur address
 
+
                 // get cur vol
                 int vol = pjsua_interface_get_volume();
                 snprintf(r, 150, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\", \"vol\": %d, \"gain\": %d}}\n", status, address, vol, gain);
@@ -113,6 +117,7 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
             default:
                 snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d}}\n", status);
         }
+        free(address);
         return;
     } else if(!strncmp(msg, optionValues[NEW_USER], strlen(optionValues[NEW_USER]))){
         // expects a msg of the format "new_user=<username>"
@@ -197,9 +202,10 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         char temp[20] = "";
         int pickUp = -1;
         sscanf(msg, "%s %d", temp, &pickUp);
+        printf("pick up val=%d\n", pickUp);
 
-        if (pickUp != 1 || pickUp != 2) {
-            snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"pick_up\", \"content\": \"Error\"}\n");
+        if (pickUp != 1 && pickUp != 2) {
+            snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"pick_up\", \"content\": \"Error: Must be 1 or 2\"}\n");
             return;
         }
 
@@ -207,7 +213,7 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         if (pickUpResult){
             strncpy(r, "{\"msgType\":\"pick_up\", \"content\": \"Success\"}\n", 100);
         }else{
-            snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"pick_up\", \"content\": \"Error\"}\n");
+            snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"pick_up\", \"content\": \"Error: Can't pick up\"}\n");
         }
         return;
        
@@ -311,7 +317,7 @@ void udp_receive_thread(void *arg){
             break;
         }
 
-        sleepMs(100);
+        // sleepMs(100);
         
     }
     return;
