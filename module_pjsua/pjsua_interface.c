@@ -199,6 +199,7 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
 
             PJ_LOG(3,(THIS_FILE, "free to make and accept calls, no call in session"));
             LED_turnOff();
+            buzzer_ring_off();
         }
 
     
@@ -325,6 +326,8 @@ int pjsua_interface_hang_up_call(){
 
 
     pjsua_call_hangup_all();
+    buzzer_ring_off();
+    LED_stopBlink();
    
     return 1;
 }
