@@ -90,8 +90,7 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         int status = pjsua_interface_get_status_call();
         char* address = "sip@sip:123.123.12.1";
 
-        IFace_updateStatus(status, address);
-
+        
         // if ongoing call, get the current volume and mic gain level
         switch (status) {
             case 0: // no call

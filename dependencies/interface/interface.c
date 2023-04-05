@@ -115,11 +115,15 @@ void IFace_removeUser(char* sip){
     free(userToDelete);
 }
 
-void IFace_updateStatus(int status, char* address) {
+void IFace_updateStatus() {
     if (IFace_currentUser == NULL || IFace_lastUser == NULL) {
         printf("\nERROR: INTERFACE NOT INITIALIZED!\n");
         return;
     }
+
+    int status = pjsua_interface_get_status_call();
+    char* address = "123.123.12.1";
+
     if (status != currentStatus){
         switch (status){
             case NOCALL:
@@ -156,6 +160,7 @@ void* IFace_runner(void* arg) {
         //Await input
         while (input == NONE && IFace_running) {
             sleepMs(100);
+            IFace_updateStatus()
             input = JS_read();
         }
 
