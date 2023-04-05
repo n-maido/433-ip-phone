@@ -98,6 +98,9 @@ void pjsua_interface_get_ip(char *buffer);
 //pass a buffer this will be filled with the uri 
 void pjsua_interface_get_uri(char *buffer);
 
+//pass a buffer this will be filled with the uri wihout <>
+void pjsua_interface_get_uri_alt(char *buffer);
+
 //Cleanup. Returns -1 if there were any issues closing.
 int pjsua_interface_cleanup(void);
 
