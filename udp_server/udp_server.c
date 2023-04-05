@@ -81,10 +81,12 @@ static void extractString(char* msg, UDP_OPTIONS option, char sipAddress[MAX_SIP
  * to the node server
 */
 static void stripQuotes(char *address, char *strippedAddress) {
+    memset(strippedAddress, 0, CURRENT_URI_SIZE);
     int j = 0;
     for (int i = 0; address[i] != '\0'; i++) {
         if (address[i] != '"' && address[i] != '\'') {
-            strippedAddress[j++] = strippedAddress[i];
+            strippedAddress[j] = address[i];
+            j++;
         }
     }
     strippedAddress[j] = '\0'; // terminate the new string
@@ -114,6 +116,7 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
                 pjsua_interface_get_uri(address);
                 char strippedAddress[CURRENT_URI_SIZE];
                 stripQuotes(address, strippedAddress);
+
                 snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\"}}\n", status, strippedAddress);
                 break;
             case 2:  // call in session, outgoing call
@@ -123,8 +126,9 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
                 pjsua_interface_get_uri(address);
                 char strippedAddress[CURRENT_URI_SIZE];
                 stripQuotes(address, strippedAddress);
-                // get cur vol
+
                 int vol = pjsua_interface_get_volume();
+                
                 snprintf(r, 150, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\", \"vol\": %d, \"gain\": %d}}\n", status, strippedAddress, vol, gain);
                 break;
             }
