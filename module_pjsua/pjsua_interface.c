@@ -3,6 +3,7 @@
 #include "pjsua_interface.h"
 #include <pjsua-lib/pjsua.h>
 #include <pjlib.h>
+#include <pjsip.h>
 #include "../udp_server/udp_server.h"
 
 #include "../dependencies/utils/util.h"
@@ -426,9 +427,6 @@ static void* thread_proc(){
 }
 
 
-
-
-
 static int pjsua_thread(void){
 
    
@@ -460,6 +458,8 @@ static int pjsua_thread(void){
         status = pjsua_init(&cfg, &log_cfg, NULL);
         if (status != PJ_SUCCESS) error_exit("Error in pjsua_init()", status);
     }
+
+	
 
     /* Add UDP transport. */
     {
@@ -518,8 +518,13 @@ static int pjsua_thread(void){
 
 
    }
-
-    
+	pj_str_t tmpstr;
+    status = pjsua_codec_set_priority(pj_cstr(&tmpstr,"speex/16000"),0);
+	if(status != PJ_SUCCESS){error_exit("Error disabling speex/16000", status);}
+	status = pjsua_codec_set_priority(pj_cstr(&tmpstr,"speex/8000"),0);
+	if(status != PJ_SUCCESS){error_exit("Error disabling speex/8000", status);}
+	status = pjsua_codec_set_priority(pj_cstr(&tmpstr,"pcma"),255);
+	if(status != PJ_SUCCESS){error_exit("Error updating pcma", status);}
     /* Register to SIP server by creating SIP account. */
     {
         // pjsua_acc_config cfg;
