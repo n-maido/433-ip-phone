@@ -116,9 +116,13 @@ static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 
     current_call=call_id;
     pthread_mutex_unlock(&call_mutex);
-    
-
+    pj_str_t remote_uri = ci.remote_info;
+    memset(current_uri, 0, sizeof(CURRENT_URI_SIZE));
+    pthread_mutex_lock(&current_uri_mutex);
+    sprintf(current_uri,"%s",remote_uri); 
+    pthread_mutex_unlock(&current_uri_mutex);
     pjsua_call_get_info(call_id, &ci);
+
 
     PJ_LOG(3,(THIS_FILE, "Incoming call from %.*s!!",
                          (int)ci.remote_info.slen,
@@ -168,7 +172,7 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
     /* Use the call information */
     // printf("Remote address: %.*s\n", (int)remote_address.slen, remote_address);
     // printf("Remote contact: %.*s\n", (int)remote_contact.slen, remote_contact);
-    printf("Remote URI: %.*s\n", (int)remote_uri.slen, remote_uri);
+    //printf("Remote URI: %.*s\n", (int)remote_uri.slen, remote_uri);
     memset(current_uri, 0, sizeof(CURRENT_URI_SIZE));
     pthread_mutex_lock(&current_uri_mutex);
     sprintf(current_uri,"%s",remote_uri); 
@@ -194,6 +198,7 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
             pthread_mutex_unlock(&status_call_mutex);
 
             PJ_LOG(3,(THIS_FILE, "free to make and accept calls, no call in session"));
+            LED_turnOff();
         }
 
     
@@ -201,6 +206,9 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
         //this pick value is only modified once since only one call can be in session;
         if(ci.state == PJSIP_INV_STATE_CONFIRMED){
 
+            buzzer_ring_off();
+            LED_stopBlink();
+            LED_turnOn();
             pthread_mutex_lock(&status_call_mutex);
             status_call=2;
             pthread_mutex_unlock(&status_call_mutex);
@@ -217,7 +225,9 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
     }
 
     if(ci.state == PJSIP_INV_STATE_CALLING){
-
+        
+        buzzer_ring(2);
+        LED_blink(2);
         pthread_mutex_lock(&status_call_mutex);
         status_call=3;
         pthread_mutex_unlock(&status_call_mutex);
