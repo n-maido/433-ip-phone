@@ -569,8 +569,21 @@ static int pjsua_thread(void){
 
      pj_thread_join(thread);
 
-/*  threads 
+    //threads 
+    
+    
+    
+    rc = pj_thread_create(pool, "interface", (pj_thread_proc *)&IFace_runner,
+                          NULL,
+                          PJ_THREAD_DEFAULT_STACK_SIZE,
+                          0,
+                          &interface);
 
+    if (rc != PJ_SUCCESS)
+    {
+        
+        error_exit("Error creating interface thread", rc);
+    };
 
     rc = pj_thread_create(pool, "network", (pj_thread_proc *)&udp_receive_thread,
                           NULL,
@@ -583,23 +596,9 @@ static int pjsua_thread(void){
         
         error_exit("Error creating network thread", rc);
     };
-    
-    
-   
-    rc = pj_thread_create(pool, "interface", (pj_thread_proc *)&IFace_runner,
-                          NULL,
-                          PJ_THREAD_DEFAULT_STACK_SIZE,
-                          0,
-                          &interface);
-
-    if (rc != PJ_SUCCESS)
-    {
-        
-        error_exit("Error creating interface thread", rc);
-    };
   
    
-*/
+
     /* If URL is specified, make call to the URL. */
 
     /* Wait until user press "q" to quit. */
@@ -690,10 +689,10 @@ static int pjsua_thread(void){
 
    
     sendShutdownRequest();
-    //pj_thread_join(network); 
-    //IFace_endThread();
-    //pj_thread_join(interface); 
-    //IFace_cleanup();
+    pj_thread_join(network); 
+    IFace_endThread();
+    pj_thread_join(interface); 
+    IFace_cleanup();
     pjsua_destroy();
     return 0;
 }
@@ -709,7 +708,7 @@ int pjsua_interface_init(pthread_cond_t * cond, pthread_mutex_t * lock){
     status_call=0;
     current_uri=malloc(CURRENT_URI_SIZE*sizeof(char));
 
-    //IFace_initialize();
+    IFace_initialize();
     pthread_mutex_init(&call_mutex, NULL);
     pthread_mutex_init(&pickup_call_mutex, NULL);
     pthread_mutex_init(&status_call_mutex,NULL);
