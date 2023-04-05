@@ -160,7 +160,7 @@ void* IFace_runner(void* arg) {
         //Await input
         while (input == NONE && IFace_running) {
             sleepMs(100);
-            IFace_updateStatus()
+            IFace_updateStatus();
             input = JS_read();
         }
 
