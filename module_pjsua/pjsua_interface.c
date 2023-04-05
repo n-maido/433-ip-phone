@@ -198,8 +198,7 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
             pthread_mutex_unlock(&status_call_mutex);
 
             PJ_LOG(3,(THIS_FILE, "free to make and accept calls, no call in session"));
-            LED_turnOff();
-            buzzer_ring_off();
+            
         }
 
     
@@ -207,9 +206,7 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
         //this pick value is only modified once since only one call can be in session;
         if(ci.state == PJSIP_INV_STATE_CONFIRMED){
 
-            buzzer_ring_off();
-            LED_stopBlink();
-            LED_turnOn();
+         
             pthread_mutex_lock(&status_call_mutex);
             status_call=2;
             pthread_mutex_unlock(&status_call_mutex);
@@ -227,8 +224,7 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
 
     if(ci.state == PJSIP_INV_STATE_CALLING){
         
-        buzzer_ring(2);
-        LED_blink(2);
+    
         pthread_mutex_lock(&status_call_mutex);
         status_call=3;
         pthread_mutex_unlock(&status_call_mutex);
@@ -303,6 +299,7 @@ int pjsua_interface_make_call(char *str){
 
     //pj_str_t uri = pj_str("sip:san@192.168.26.128");
     pj_str_t uri = pj_str(str);
+    
     status = pjsua_call_make_call(network_account_id, &uri, 0, NULL, NULL, &current_call);
     
     if (status != PJ_SUCCESS){
@@ -327,8 +324,6 @@ int pjsua_interface_hang_up_call(){
 
 
     pjsua_call_hangup_all();
-    buzzer_ring_off();
-    LED_stopBlink();
    
     return 1;
 }
