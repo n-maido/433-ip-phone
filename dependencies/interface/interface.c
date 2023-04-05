@@ -55,6 +55,8 @@ void IFace_initialize() {
     IFace_lastUser = IFace_currentUser;
     LCD_writeMessage(IFace_currentUser->name, IFace_currentUser->sip);
 
+    IFace_addUser("Ryan's BBG", "sip:san@192.168.1.207");
+
     IFace_running = true;
     //pthread_attr_init(&attr);
     //pthread_create(&tid, &attr, IFace_runner, NULL);
@@ -174,7 +176,7 @@ void* IFace_runner(void* arg) {
         }
 
         //Hang up
-        if (currentStatus == OUTGOING && input == DOWN) {
+        if (currentStatus == OUTGOING || currentStatus == INCALL && input == DOWN) {
             pjsua_interface_hang_up_call();
         }
 
