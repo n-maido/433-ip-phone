@@ -92,7 +92,18 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         int status = pjsua_interface_get_status_call();
         // char* address = (char*) malloc(CURRENT_URI_SIZE);
         pjsua_interface_get_uri(address);
-        printf("cur address: %s\n", address);
+
+        // strip quotations
+        char strippedAddress[CURRENT_URI_SIZE];
+        int j = 0;
+        for (int i = 0; address[i] != '\0'; i++) {
+            if (address[i] != '"' && address[i] != '\'') {
+                strippedAddress[j++] = strippedAddress[i];
+            }
+        }
+        strippedAddress[j] = '\0'; // terminate the new string
+
+        printf("cur address: %s\n", strippedAddress);
 
         // if ongoing call, get the current volume and mic gain level
         switch (status) {
@@ -100,7 +111,7 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
                 snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d}}\n", status);
                 break;
             case 1: // incoming call
-                snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\"}}\n", status, address);
+                snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\"}}\n", status, strippedAddress);
                 break;
             case 2:  // call in session, outgoing call
             case 3:
@@ -109,13 +120,14 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
 
                 // get cur vol
                 int vol = pjsua_interface_get_volume();
-                snprintf(r, 150, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\", \"vol\": %d, \"gain\": %d}}\n", status, address, vol, gain);
+                snprintf(r, 150, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\", \"vol\": %d, \"gain\": %d}}\n", status, strippedAddress, vol, gain);
                 break;
             }
             default:
                 snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d}}\n", status);
         }
         // free(address);
+        // memset(address, 0, CURRENT_URI_SIZE);
         return;
     } else if(!strncmp(msg, optionValues[NEW_USER], strlen(optionValues[NEW_USER]))){
         // expects a msg of the format "new_user=<username>"
