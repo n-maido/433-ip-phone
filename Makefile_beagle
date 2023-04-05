@@ -8,10 +8,10 @@ include $(PJDIR)/build.mak
 
 # Edit this file to compile extra C files into their own programs.
 TARGET= ip_phone
-SOURCES= main.c udp_server/udp_server.c utils/utils.c module_pjsua/pjsua_interface.c module_pjsua/pjsua_interface.h dependencies/LED/led.c dependencies/utils/util.c dependencies/interface/interface.c dependencies/buzzer/buzzer.c dependencies/LCD/lcd.c dependencies/LCD/gpio.c dependencies/joystick/joystick.c
+SOURCES= main.c udp_server/udp_server.c utils/utils.c module_pjsua/pjsua_interface.c module_pjsua/pjsua_interface.h dependencies/LED/led.c dependencies/utils/util.c dependencies/interface/interface.c dependencies/buzzer/buzzer.c dependencies/LCD/lcd.c dependencies/LCD/gpio.c dependencies/joystick/joystick.c dependencies/ipaddr/ipaddr.c
 
-# PUBDIR = $(HOME)/cmpt433/public/myApps
-OUTDIR = /mnt/remote
+PUBDIR = /mnt/remote
+OUTDIR = /mnt/remote/
 # CROSS_TOOL = arm-linux-gnueabihf-
 # CC_CPP = $(CROSS_TOOL)g++
 # CC_C = $(CROSS_TOOL)gcc

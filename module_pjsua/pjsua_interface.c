@@ -9,12 +9,13 @@
 #include "../dependencies/buzzer/buzzer.h"
 #include "../dependencies/LED/led.h"
 #include "../dependencies/ipaddr/ipaddr.h"
+#include "../dependencies/interface/interface.h"
 
 #define THIS_FILE	"pjsuaInterface"
 
 #define SIP_DOMAIN	"192.168.7.2" //make this automatic look into sample app 
 #define SIP_USER_COMPUTER "debian"
-#define SIP_USER_NETWORK  "debian01"
+#define SIP_USER_NETWORK  "san"
 #define CURRENT_URI_SIZE 1024
 static pthread_t pjsuaThreadPID = -1;
 static pthread_cond_t * shutdownRequest = NULL;
@@ -472,49 +473,13 @@ static int pjsua_thread(void){
     if (status != PJ_SUCCESS) error_exit("Error starting pjsua", status);
     
     //set hardware devices for input and output 
-    int dev_count;
-    pjmedia_aud_dev_index dev_idx;
-    // pj_status_t status;
-    dev_count = pjmedia_aud_dev_count();
-    printf("Got %d audio devices\n", dev_count);
-    PJ_LOG(3,(THIS_FILE,"Got %d audio devices\n", dev_count));
-
-    for (dev_idx=0; dev_idx<dev_count; dev_idx++) {
-        pjmedia_aud_dev_info info;
-        status = pjmedia_aud_dev_get_info(dev_idx, &info);
-        printf("%d. %s (in=%d, out=%d)\n",
-        dev_idx, info.name,
-        info.input_count, info.output_count);
-        PJ_LOG(3,(THIS_FILE,"%d. %s (in=%d, out=%d)\n",
-        dev_idx, info.name,
-        info.input_count, info.output_count));
-    }
-    
-    int captureDevice = 9;
-    int playbackDevice = 3;
-    status = pjsua_set_snd_dev(captureDevice, playbackDevice);
-    // status = pjsua_set_snd_dev(9, 3);
+    status = pjsua_set_snd_dev(9, 3);
 
     //volume ajustement tested works still dont understand the 0 
     pjsua_conf_adjust_tx_level(0, 1.0);
     tx_volume=100;
 
-    // if (status != PJ_SUCCESS) error_exit("Error adding sound device", status);
-    //TODO: nhi test, rm
-    if (status != PJ_SUCCESS) {
-        printf("SOUND ERROR: %d, %d", captureDevice, playbackDevice);
-        PJ_LOG(3,(THIS_FILE,"SOUND ERROR: %d, %d", captureDevice, playbackDevice));
-        // Print error message and code
-        // printf("Error setting sound device: %s\n", status);
-        // Determine which argument caused the error
-        if (captureDevice < 0) {
-                printf("Invalid capture device index: %d\n", captureDevice);
-            }
-        if (playbackDevice < 0) {
-            printf("Invalid playback device index: %d\n", playbackDevice);
-        }
-        error_exit("Error adding sound device", status);
-    }
+    if (status != PJ_SUCCESS) error_exit("Error adding sound device", status);
 
     /* Get the current input (microphone) volume */
   
@@ -585,7 +550,7 @@ static int pjsua_thread(void){
     //create worker thread thread_proc
     pj_caching_pool cp;
     pj_pool_t *pool;
-    pj_thread_t *thread , *network;
+    pj_thread_t *thread , *network, *interface;
     pj_caching_pool_init(&cp, NULL, 1024);
     pj_status_t rc;
     pool = pj_pool_create(&cp.factory, NULL, 4000, 4000, NULL);
@@ -604,6 +569,8 @@ static int pjsua_thread(void){
 
      pj_thread_join(thread);
 
+/*  threads 
+
 
     rc = pj_thread_create(pool, "network", (pj_thread_proc *)&udp_receive_thread,
                           NULL,
@@ -617,9 +584,22 @@ static int pjsua_thread(void){
         error_exit("Error creating network thread", rc);
     };
     
+    
+   
+    rc = pj_thread_create(pool, "interface", (pj_thread_proc *)&IFace_runner,
+                          NULL,
+                          PJ_THREAD_DEFAULT_STACK_SIZE,
+                          0,
+                          &interface);
+
+    if (rc != PJ_SUCCESS)
+    {
+        
+        error_exit("Error creating interface thread", rc);
+    };
   
    
-
+*/
     /* If URL is specified, make call to the URL. */
 
     /* Wait until user press "q" to quit. */
@@ -698,6 +678,7 @@ static int pjsua_thread(void){
         if (option[0]== 'u') {
 
             
+            
             PJ_LOG(3,(THIS_FILE, "REMOTE URI: %s",current_uri));
             
            
@@ -710,6 +691,9 @@ static int pjsua_thread(void){
    
     sendShutdownRequest();
     //pj_thread_join(network); 
+    //IFace_endThread();
+    //pj_thread_join(interface); 
+    //IFace_cleanup();
     pjsua_destroy();
     return 0;
 }
@@ -725,6 +709,7 @@ int pjsua_interface_init(pthread_cond_t * cond, pthread_mutex_t * lock){
     status_call=0;
     current_uri=malloc(CURRENT_URI_SIZE*sizeof(char));
 
+    //IFace_initialize();
     pthread_mutex_init(&call_mutex, NULL);
     pthread_mutex_init(&pickup_call_mutex, NULL);
     pthread_mutex_init(&status_call_mutex,NULL);
