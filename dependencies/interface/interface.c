@@ -263,7 +263,7 @@ void* IFace_runner(void* arg) {
                     if (returnStatus == 0) {
                         LCD_writeMessage("Error Calling", "Try again later");
                     } else {
-                        LCD_writeMessage("Calling...", IFace_currentUser->name);
+                        LCD_writeMessage("User may be busy", "");
                     }
                 }
                 break;
