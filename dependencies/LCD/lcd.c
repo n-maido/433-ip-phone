@@ -141,7 +141,7 @@ static void LCD_writeChar(char c)
 }
 
 static void LCD_pulseEnable() {
-    struct timespec pulseDelay = {0, 10000000};
+    struct timespec pulseDelay = {0, 500000};
     GPIO_writeValue(E_GPIO_NUMBER, "1");
     nanosleep(&pulseDelay, (struct timespec*) NULL);
     GPIO_writeValue(E_GPIO_NUMBER, "0");
