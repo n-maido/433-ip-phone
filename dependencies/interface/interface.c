@@ -57,8 +57,8 @@ void IFace_initialize() {
     IFace_firstUser = IFace_currentUser;
     LCD_writeMessage(IFace_currentUser->name, IFace_currentUser->sip);
 
-    IFace_addUser("Ryan's BBG", "sip:san@192.168.1.207");
-    IFace_addUser("Misha's BBG", "sip:san@192.168.1.58");
+    IFace_addUser("Ryan's BBG", "sip:beagle@192.168.1.207");
+    IFace_addUser("Misha's BBG", "sip:beagle@192.168.1.58");
 
     IFace_running = true;
     //pthread_attr_init(&attr);
