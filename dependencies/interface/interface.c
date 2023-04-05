@@ -184,7 +184,7 @@ void IFace_updateStatus() {
             LCD_writeMessage("In call with:", IFace_extractIp(IFace_getName(address)));
             break;
             case OUTGOING:
-            LCD_writeMessage("Ringing...", IFace_extractIp(IFace_getName(address)));
+            LCD_writeMessage("Call outgoing...", IFace_extractIp(IFace_getName(address)));
             break;
             default:
             break;
