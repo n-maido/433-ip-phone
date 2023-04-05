@@ -62,7 +62,7 @@ void IFace_initialize() {
 
     IFace_addUser("Ryan's BBG", "sip:beagle@192.168.1.207");
     IFace_addUser("Misha's BBG", "sip:beagle@192.168.1.58");
-    IFace_addUser("Misha's Android", "sip:misha@192.168.1.82:57440");
+    IFace_addUser("Misha's Android", "sip:misha@192.168.1.82");
     IFace_addUser("San's BBG", "sip:beagle@192.168.1.129");
     IFace_addUser("Nhi's BBG", "sip:beagle@192.168.1.5");
 
