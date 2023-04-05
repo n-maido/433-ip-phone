@@ -16,7 +16,7 @@
 
 #define SIP_DOMAIN	"192.168.7.2" //make this automatic look into sample app 
 #define SIP_USER_COMPUTER "debian"
-#define SIP_USER_NETWORK  "san"
+#define SIP_USER_NETWORK  "beagle"
 #define CURRENT_URI_SIZE 1024
 static pthread_t pjsuaThreadPID = -1;
 static pthread_cond_t * shutdownRequest = NULL;
@@ -162,16 +162,17 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
      
     //////site this code
        /* Extract call information */
-    pj_str_t remote_address = ci.remote_info;
-    pj_str_t remote_contact = ci.remote_contact;
+    // pj_str_t remote_address = ci.remote_info;
+    // pj_str_t remote_contact = ci.remote_contact;
     pj_str_t remote_uri = ci.remote_info;
     /* Use the call information */
     printf("Remote address: %.*s\n", (int)remote_address.slen, remote_address);
     printf("Remote contact: %.*s\n", (int)remote_contact.slen, remote_contact);
-    printf("Remote contact: %.*s\n", (int)remote_contact.slen, remote_contact);
     printf("Remote URI: %.*s\n", (int)remote_uri.slen, remote_uri);
     memset(current_uri, 0, sizeof(CURRENT_URI_SIZE));
+    pthread_mutex_lock(&current_uri_mutex);
     sprintf(current_uri,"%s",remote_uri); 
+    pthread_mutex_unlock(&current_uri_mutex);
     /////////////
 
 
@@ -427,6 +428,19 @@ static void* thread_proc(){
 }
 
 
+
+
+void pjsua_interface_get_uri(char *buffer){
+
+    memset(buffer, 0, sizeof(CURRENT_URI_SIZE));
+    pthread_mutex_lock(&current_uri_mutex);
+    snprintf(buffer,CURRENT_URI_SIZE,"%s",current_uri);
+    pthread_mutex_unlock(&current_uri_mutex);
+
+
+
+}
+
 static int pjsua_thread(void){
 
    
@@ -510,9 +524,9 @@ static int pjsua_thread(void){
 
 
     char uri_buffer[1024];
-    //sprintf(uri_buffer,"sip:%s@%s",SIP_USER_NETWORK,buffer);
-    network_account_config.id = pj_str("sip:san@192.168.1.129");
-    //network_account_config.id = pj_str(uri_buffer);
+    sprintf(uri_buffer,"sip:%s@%s",SIP_USER_NETWORK,buffer);
+    //network_account_config.id = pj_str("sip:san@192.168.1.129");
+    network_account_config.id = pj_str(uri_buffer);
     status = pjsua_acc_add(&network_account_config, PJ_TRUE, &network_account_id);
     if (status != PJ_SUCCESS)  error_exit("Error second account", status);
 
@@ -689,8 +703,10 @@ static int pjsua_thread(void){
         if (option[0]== 'u') {
 
             
-            
+            pthread_mutex_lock(&current_uri_mutex);
             PJ_LOG(3,(THIS_FILE, "REMOTE URI: %s",current_uri));
+            pthread_mutex_unlock(&current_uri_mutex);
+            
             
            
         }
