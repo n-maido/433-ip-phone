@@ -572,11 +572,17 @@ static int pjsua_thread(void){
 
      pj_thread_join(thread);
 
-    //threads 
+
+
+
+
+    rc = pj_thread_create(pool, "network", (pj_thread_proc *)&udp_receive_thread,
+
     
     
     
     rc = pj_thread_create(pool, "interface", (pj_thread_proc *)&IFace_runner,
+
                           NULL,
                           PJ_THREAD_DEFAULT_STACK_SIZE,
                           0,
@@ -588,11 +594,6 @@ static int pjsua_thread(void){
         error_exit("Error creating interface thread", rc);
     };
 
-    rc = pj_thread_create(pool, "network", (pj_thread_proc *)&udp_receive_thread,
-                          NULL,
-                          PJ_THREAD_DEFAULT_STACK_SIZE,
-                          0,
-                          &network);
 
     if (rc != PJ_SUCCESS)
     {

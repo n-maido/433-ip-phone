@@ -91,8 +91,6 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         int status = pjsua_interface_get_status_call();
         char* address = "sip@sip:123.123.12.1";
 
-        //IFace_updateStatus(status, address);
-
         // if ongoing call, get the current volume and mic gain level
         switch (status) {
             case 0: // no call
@@ -140,6 +138,7 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         printf("new contact: %s, %s\n", name, ip);
         IFace_addUser(name, ip);
 
+
         strncpy(r, "{\"msgType\":\"add_contact\", \"content\": \"Success\"}\n", 100);
 
     } else if(!strncmp(msg, optionValues[DELETE_CONTACT], strlen(optionValues[DELETE_CONTACT]))){
@@ -154,7 +153,9 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
 
         IFace_removeUser(ip);
 
+
         printf("can we reach?");
+
 
         strncpy(r, "{\"msgType\":\"delete_contact\", \"content\": \"Success\"}\n", 100);        
     } else if(!strncmp(msg, optionValues[MAKE_CALL], strlen(optionValues[MAKE_CALL]))){
