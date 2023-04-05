@@ -757,15 +757,20 @@ int pjsua_interface_init(pthread_cond_t * cond, pthread_mutex_t * lock){
 
 int pjsua_interface_cleanup(void){
     
+    
+   
+    if(pthread_join(pjsuaThreadPID, NULL) != 0){
+        perror("Error in joining the phsua thread.");
+    }
+
+
+
     free(current_uri);
     pthread_mutex_destroy(&call_mutex);    
     pthread_mutex_destroy(&pickup_call_mutex);
     pthread_mutex_destroy(&status_call_mutex);
     pthread_mutex_destroy(&tx_volume_mutex);
     pthread_mutex_destroy(&current_uri_mutex);
-    if(pthread_join(pjsuaThreadPID, NULL) != 0){
-        perror("Error in joining the phsua thread.");
-    }
    
     return 1;
 }
