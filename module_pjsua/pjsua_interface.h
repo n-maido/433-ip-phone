@@ -92,8 +92,11 @@ void pjsua_interface_set_volume(int volume);
 
 int pjsua_interface_get_volume();
 
-//automatic acount based on ip found on the interface
+//pass a buffer this will be filled with the ip 
+void pjsua_interface_get_ip(char *buffer);
 
+//pass a buffer this will be filled with the uri 
+void pjsua_interface_get_uri(char *buffer);
 
 //Cleanup. Returns -1 if there were any issues closing.
 int pjsua_interface_cleanup(void);
