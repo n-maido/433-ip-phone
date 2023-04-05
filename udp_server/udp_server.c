@@ -133,13 +133,12 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
 
         char* name = strtok(contact, "&");
         char* sipAddress = strtok(NULL, "&");
+        char* tmp = strtok(sipAddress, "@");
+        char* ip = strtok(NULL, "@");
 
-        printf("new contact: %s, %s\n", name, sipAddress);
-        IFace_addUser(name, sipAddress);
+        printf("new contact: %s, %s\n", name, ip);
+        IFace_addUser(name, ip);
 
-        //TODO: call LCD_add_contact(name, sipAddress)
-
-        //TODO: return their sip address?
         strncpy(r, "{\"msgType\":\"add_contact\", \"content\": \"Success\"}\n", 100);
 
     } else if(!strncmp(msg, optionValues[DELETE_CONTACT], strlen(optionValues[DELETE_CONTACT]))){
@@ -147,10 +146,14 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         // parse username
         char address[MAX_SIP_ADDRESS_SIZE] = "";
         extractString(msg, DELETE_CONTACT, address);
+        char* tmp = strtok(address, "@");
+        char* ip = strtok(NULL, "@");
 
-        printf("Removing user: %s\n", address);
+        printf("Removing user: %s\n", ip);
 
-        IFace_removeUser(address);
+        IFace_removeUser(ip);
+
+        printf("can we reach?");
 
         strncpy(r, "{\"msgType\":\"delete_contact\", \"content\": \"Success\"}\n", 100);        
     } else if(!strncmp(msg, optionValues[MAKE_CALL], strlen(optionValues[MAKE_CALL]))){
