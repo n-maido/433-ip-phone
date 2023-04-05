@@ -472,13 +472,50 @@ static int pjsua_thread(void){
     if (status != PJ_SUCCESS) error_exit("Error starting pjsua", status);
     
     //set hardware devices for input and output 
-    status = pjsua_set_snd_dev(9, 3);
+    int dev_count;
+    pjmedia_aud_dev_index dev_idx;
+    // pj_status_t status;
+    dev_count = pjmedia_aud_dev_count();
+    printf("Got %d audio devices\n", dev_count);
+    PJ_LOG(3,(THIS_FILE,"Got %d audio devices\n", dev_count));
+
+    for (dev_idx=0; dev_idx<dev_count; dev_idx++) {
+        pjmedia_aud_dev_info info;
+        status = pjmedia_aud_dev_get_info(dev_idx, &info);
+        printf("%d. %s (in=%d, out=%d)\n",
+        dev_idx, info.name,
+        info.input_count, info.output_count);
+        PJ_LOG(3,(THIS_FILE,"%d. %s (in=%d, out=%d)\n",
+        dev_idx, info.name,
+        info.input_count, info.output_count));
+    }
+    
+    int captureDevice = 9;
+    int playbackDevice = 3;
+    status = pjsua_set_snd_dev(captureDevice, playbackDevice);
+    // status = pjsua_set_snd_dev(9, 3);
 
     //volume ajustement tested works still dont understand the 0 
     pjsua_conf_adjust_tx_level(0, 1.0);
     tx_volume=100;
 
-    if (status != PJ_SUCCESS) error_exit("Error adding sound device", status);
+    // if (status != PJ_SUCCESS) error_exit("Error adding sound device", status);
+    //TODO: nhi test, rm
+    if (status != PJ_SUCCESS) {
+        printf("SOUND ERROR: %d, %d", captureDevice, playbackDevice);
+        PJ_LOG(3,(THIS_FILE,"SOUND ERROR: %d, %d", captureDevice, playbackDevice));
+        // Print error message and code
+        // printf("Error setting sound device: %s\n", status);
+        // Determine which argument caused the error
+        if (captureDevice < 0) {
+                printf("Invalid capture device index: %d\n", captureDevice);
+            }
+        if (playbackDevice < 0) {
+            printf("Invalid playback device index: %d\n", playbackDevice);
+        }
+        error_exit("Error adding sound device", status);
+    }
+
     /* Get the current input (microphone) volume */
   
     //register without sip server account

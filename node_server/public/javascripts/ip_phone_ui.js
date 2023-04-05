@@ -97,7 +97,7 @@ $(document).ready(function() {
 
 		socket.on('pick_up', function(result) {
 			if (result.toLowerCase() === "error") {
-				callInProgress = true;
+				// callInProgress = true;
 				console.log(result);
 				// setStatusBox(Status.Error, result);
 			}
@@ -111,7 +111,7 @@ $(document).ready(function() {
 		socket.on('pick_up', function(result) {
 			console.log(result);
 			if (result.toLowerCase() === "error") {
-				callInProgress = false;
+				// callInProgress = false;
 				console.log(result);
 				// setStatusBox(Status.Error, result);
 			}
@@ -384,7 +384,7 @@ function makeCall(callee) {
 	socket.on('make_call', function(result) {
 		console.log(result);
 		if (result.toLowerCase() === "error") {
-			callInProgress = false;
+			// callInProgress = false;
 			console.log(result);
 			// setStatusBox(Status.Error, result);
 		} else {
