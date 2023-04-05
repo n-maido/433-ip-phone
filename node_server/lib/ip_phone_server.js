@@ -64,6 +64,8 @@ function handleCommand(socket) {
 
 			// console.log("UDP Client: message Rx" + remote.address + ':' + remote.port +' - ' + message);
 
+			// let rawMsg = message.toString('utf8');
+		
 			var reply = JSON.parse(message.toString('utf8'));
 			
 			switch(reply.msgType) {
