@@ -1,5 +1,6 @@
 #include "../joystick/joystick.h"
 #include "../LCD/lcd.h"
+#include "../pot/pot.h"
 #include "../utils/util.h"
 #include "interface.h"
 #include "../../module_pjsua/pjsua_interface.h"
@@ -62,6 +63,7 @@ void IFace_initialize() {
     IFace_addUser("Ryan's BBG", "sip:beagle@192.168.1.207");
     IFace_addUser("Misha's BBG", "sip:beagle@192.168.1.58");
     IFace_addUser("Misha's Android", "sip:misha@192.168.1.82");
+    IFace_addUser("San's BBG", "sip:beagle@192.168.1.129");
 
     address = (char*)malloc(CURRENT_URI_SIZE);
     
@@ -155,6 +157,7 @@ void IFace_updateStatus() {
 
     int status = pjsua_interface_get_status_call();
 
+
     pjsua_interface_get_uri(address);
 
 
@@ -192,10 +195,17 @@ void* IFace_runner(void* arg) {
     while(IFace_running){
         enum JS_direction input = JS_read();
 
+        int lastVolume = -1;
+
         //Await input
         while (input == NONE && IFace_running) {
             sleepMs(100);
             IFace_updateStatus();
+            int volume = POT_readValue();
+            if (volume != lastVolume){
+                pjsua_interface_set_volume(volume);
+                lastVolume = volume;
+            }
             input = JS_read();
         }
 
@@ -234,8 +244,13 @@ void* IFace_runner(void* arg) {
             case IN:
                 if (IFace_currentUser->prev != NULL){
                     printf("Calling user '%s' at %s\n", IFace_currentUser->name, IFace_currentUser->sip);
-                    pjsua_interface_make_call(IFace_currentUser->sip);
-                    LCD_writeMessage("Calling...", IFace_currentUser->name);
+                    int returnStatus = pjsua_interface_make_call(IFace_currentUser->sip);
+                    
+                    if (returnStatus == 0) {
+                        LCD_writeMessage("Error Calling", "Try again later");
+                    } else {
+                        LCD_writeMessage("Calling...", IFace_currentUser->name);
+                    }
                 }
                 break;
             default:
