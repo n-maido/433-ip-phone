@@ -106,6 +106,7 @@ static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
     PJ_UNUSED_ARG(rdata);
 
     pthread_mutex_lock(&call_mutex);
+
     if(current_call != PJSUA_INVALID_ID){
        pthread_mutex_unlock(&call_mutex);
 
@@ -114,6 +115,7 @@ static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
         return;
     }
 
+    pjsua_call_get_info(call_id, &ci);
     current_call=call_id;
     pthread_mutex_unlock(&call_mutex);
     pj_str_t remote_uri = ci.remote_info;
@@ -122,7 +124,6 @@ static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
     memset(current_uri, 0, sizeof(CURRENT_URI_SIZE));
     sprintf(current_uri,"%s",remote_uri); 
     pthread_mutex_unlock(&current_uri_mutex);
-    pjsua_call_get_info(call_id, &ci);
 
 
     PJ_LOG(3,(THIS_FILE, "Incoming call from %.*s!!",
