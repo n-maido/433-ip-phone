@@ -291,7 +291,7 @@ int pjsua_interface_make_call(char *str){
     }
     //pj_str_t uri = pj_str("sip:san@192.168.26.128");
     pj_str_t uri = pj_str(str);
-    status = pjsua_call_make_call(linphone_account_id, &uri, 0, NULL, NULL, &current_call);
+    status = pjsua_call_make_call(network_account_id, &uri, 0, NULL, NULL, &current_call);
     
     if (status != PJ_SUCCESS){
 
@@ -738,7 +738,6 @@ int pjsua_interface_init(pthread_cond_t * cond, pthread_mutex_t * lock){
     pickup_call=0;
     status_call=0;
     current_uri=malloc(CURRENT_URI_SIZE*sizeof(char));
-
     IFace_initialize();
     pthread_mutex_init(&call_mutex, NULL);
     pthread_mutex_init(&pickup_call_mutex, NULL);
