@@ -1,5 +1,6 @@
 #include "../joystick/joystick.h"
 #include "../LCD/lcd.h"
+#include "../pot/pot.h"
 #include "../utils/util.h"
 #include "interface.h"
 #include "../../module_pjsua/pjsua_interface.h"
@@ -193,11 +194,17 @@ void* IFace_runner(void* arg) {
     while(IFace_running){
         enum JS_direction input = JS_read();
 
+        int lastVolume = -1;
+
         //Await input
         while (input == NONE && IFace_running) {
             sleepMs(100);
             IFace_updateStatus();
-
+            int volume = POT_readValue();
+            if (volume != lastVolume){
+                pjsua_interface_set_volume(volume);
+                lastVolume = volume;
+            }
             input = JS_read();
         }
 
