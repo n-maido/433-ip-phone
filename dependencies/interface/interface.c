@@ -39,6 +39,8 @@ static enum IFace_status currentStatus = NOCALL;
 
 static struct IFace_user* IFace_createUser(char* username, char* sip);
 
+static char *address;
+
 /*int main(){
     IFace_initialize();
     IFace_addUser("test1", "1");
@@ -59,7 +61,10 @@ void IFace_initialize() {
 
     IFace_addUser("Ryan's BBG", "sip:beagle@192.168.1.207");
     IFace_addUser("Misha's BBG", "sip:beagle@192.168.1.58");
+    IFace_addUser("Misha's Android", "sip:misha@192.168.1.82");
 
+    address = (char*)malloc(CURRENT_URI_SIZE);
+    
     IFace_running = true;
     //pthread_attr_init(&attr);
     //pthread_create(&tid, &attr, IFace_runner, NULL);
@@ -125,14 +130,14 @@ void IFace_removeUser(char* sip){
 }
 
 static char* IFace_getName(char* sip) {
-    struct IFace_user *next = IFace_lastUser->prev;
-    struct IFace_user *curr = IFace_lastUser->prev;
-    for(curr = IFace_lastUser; curr != NULL; curr = next){
-        if (strcmp(curr->sip, sip) == 0) {
-            return curr->name;
+    struct IFace_user *curr = IFace_lastUser;
+    while (strcmp(curr->sip, sip) != 0) {
+        if (curr->prev == NULL) {
+            return sip;
         }
+        curr = curr->prev;
     }
-    return sip;
+    return curr->name;
 }
 
 static char* IFace_extractIp(char* str) {
@@ -149,10 +154,8 @@ void IFace_updateStatus() {
     }
 
     int status = pjsua_interface_get_status_call();
-    char* address = (char*)malloc(CURRENT_URI_SIZE);
+
     pjsua_interface_get_uri(address);
-
-
 
 
     if (status != currentStatus){
@@ -177,8 +180,6 @@ void IFace_updateStatus() {
 
         currentStatus = status;
     }
-
-    free(address);
 }
 
 void* IFace_runner(void* arg) {
@@ -267,4 +268,6 @@ void IFace_cleanup() {
         next = IFace_currentUser->prev;
         free(IFace_currentUser);
     }
+
+    free(address);
 }
