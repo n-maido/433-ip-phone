@@ -39,5 +39,5 @@ clean:
 # Copy the nodeJS server to the public directory.
 node:
 	mkdir -p $(OUTDIR)ip_phone_node_copy/ 
-	cp -R node_server/* $(OUTDIR)ip_phone_node_copy/ 
+	sudo cp -R node_server/* $(OUTDIR)ip_phone_node_copy/ 
 #cd $(PUBDIR)/ip_phone_node_copy/ && npm install

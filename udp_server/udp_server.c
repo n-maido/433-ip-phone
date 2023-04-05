@@ -10,11 +10,12 @@
 #include <pthread.h>
 #include <pjsua-lib/pjsua.h>
 #include <pjlib.h>
-#define THIS_FILE   "udp_server"
+#define THIS_FILE  "udp_server"
 
 #include "udp_server.h"
 #include "../module_pjsua/pjsua_interface.h"
 #include "../dependencies/interface/interface.h"
+#include "../dependencies/utils/util.h"
 
 #define PORT 11037
 //predefined length in assignment spec for UDP packet
@@ -46,7 +47,7 @@ typedef enum {
     OPTIONS_MAX_COUNT
 } UDP_OPTIONS;
 
-const char optionValues[OPTIONS_MAX_COUNT][24] = {"call_status", "new_user=", "add_contact=", "delete_contact=", "make_call=", "end_call=", "pick_up", "set_volume", "set_gain", "stop"};
+const char optionValues[OPTIONS_MAX_COUNT][24] = {"call_status", "new_user=", "add_contact=", "delete_contact=", "make_call=", "end_call", "pick_up", "set_volume", "set_gain", "stop"};
 
 static inline void toLowerString(char * s){
     for(int i = 0; i < strlen(s); ++i){
@@ -90,8 +91,6 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         int status = pjsua_interface_get_status_call();
         char* address = "sip@sip:123.123.12.1";
 
-        IFace_updateStatus(status, address);
-
         // if ongoing call, get the current volume and mic gain level
         switch (status) {
             case 0: // no call
@@ -103,18 +102,14 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
             case 2:  // call in session, outgoing call
             case 3:
             {
-                int vol = 50;
                 int gain = 10;
                 //TODO: get cur address
+
+                // get cur vol
+                int vol = pjsua_interface_get_volume();
                 snprintf(r, 150, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"address\": \"%s\", \"vol\": %d, \"gain\": %d}}\n", status, address, vol, gain);
                 break;
             }
-            // case 3: // outgoing call
-            // {
-            //     char* error = "Error";
-            //     snprintf(r, 150, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d, \"error\": \"%s\"}}\n", status, error);
-            //     break;
-            // }
             default:
                 snprintf(r, 100, "{\"msgType\":\"call_status\",\"content\":{\"status\": %d}}\n", status);
         }
@@ -137,13 +132,13 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
 
         char* name = strtok(contact, "&");
         char* sipAddress = strtok(NULL, "&");
+        char* tmp = strtok(sipAddress, "@");
+        char* ip = strtok(NULL, "@");
 
-        printf("new contact: %s, %s\n", name, sipAddress);
-        IFace_addUser(name, sipAddress);
+        printf("new contact: %s, %s\n", name, ip);
+        IFace_addUser(name, ip);
 
-        //TODO: call LCD_add_contact(name, sipAddress)
 
-        //TODO: return their sip address?
         strncpy(r, "{\"msgType\":\"add_contact\", \"content\": \"Success\"}\n", 100);
 
     } else if(!strncmp(msg, optionValues[DELETE_CONTACT], strlen(optionValues[DELETE_CONTACT]))){
@@ -151,10 +146,16 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         // parse username
         char address[MAX_SIP_ADDRESS_SIZE] = "";
         extractString(msg, DELETE_CONTACT, address);
+        char* tmp = strtok(address, "@");
+        char* ip = strtok(NULL, "@");
 
-        printf("Removing user: %s\n", address);
+        printf("Removing user: %s\n", ip);
 
-        IFace_removeUser(address);
+        IFace_removeUser(ip);
+
+
+        printf("can we reach?");
+
 
         strncpy(r, "{\"msgType\":\"delete_contact\", \"content\": \"Success\"}\n", 100);        
     } else if(!strncmp(msg, optionValues[MAKE_CALL], strlen(optionValues[MAKE_CALL]))){
@@ -175,20 +176,13 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
             snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"make_call\", \"content\": \"Success\"}");
         }
     } else if (!strncmp(msg, optionValues[END_CALL], strlen(optionValues[END_CALL]))){
-        // expects a msg of the format "end_call=<sip address>"
-        // if we don't need an address to end a call, then delete this section
-
-        // parse sip address
-        char calleeAddress[MAX_SIP_ADDRESS_SIZE] = "";
-        extractString(msg, END_CALL, calleeAddress);
-
-        printf("ending call with address %s\n", calleeAddress);
+        printf("ending call\n");
         int success = pjsua_interface_hang_up_call();
 
         if (success){
-            snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"end_call\", \"content\": \"Success: Ending call with %s\"}\n", calleeAddress);
+            snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"end_call\", \"content\": \"Success\"}\n");
         } else {
-            strncpy(r, "{\"msgType\":\"end_call\", \"content\": \"Error: Invalid SIP address.\"}\n", 100);
+            strncpy(r, "{\"msgType\":\"end_call\", \"content\": \"Error\"}\n", 100);
         }
         return;
        
@@ -227,14 +221,8 @@ static void processReply(char * msg, const unsigned int msgLen, char * r){
         if(volume < 0 || volume > 100){
             snprintf(r, 100, "{\"msgType\":\"volume\", \"content\": \"Error: Invalid volume of %d.\"}\n", volume);
         }else{
-            //TODO: call set_vol()
-            bool success = true; // placeholder, remove later
-            if (success){
-                strncpy(r, "{\"msgType\":\"volume\", \"content\": \"Success\"}\n", 100);
-                return;
-            }else{
-                snprintf(r, MAX_REPLY_SIZE, "{\"msgType\":\"volume\", \"content\": \"Error\"}\n");
-            }
+            pjsua_interface_set_volume(volume);
+            strncpy(r, "{\"msgType\":\"volume\", \"content\": \"Success\"}\n", 100);
         }
         return;
         
@@ -322,6 +310,8 @@ void udp_receive_thread(void *arg){
             sendto(udpSocket, "", strlen(""), 0, (struct sockaddr*) &remote_sin, sin_len);
             break;
         }
+
+        sleepMs(100);
         
     }
     return;

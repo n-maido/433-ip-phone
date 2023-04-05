@@ -134,7 +134,9 @@ static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
     }
 
     buzzer_ring_on();
+    LED_blink(3);
     call_incoming();
+    LED_stopBlink();
     buzzer_ring_off();
 
     /*  answer incoming calls with 200/OK only if pickup value has been changed to 1*/
@@ -163,9 +165,9 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
     pj_str_t remote_address = ci.remote_info;
     pj_str_t remote_contact = ci.remote_contact;
     pj_str_t remote_uri = ci.remote_info;
-
     /* Use the call information */
     printf("Remote address: %.*s\n", (int)remote_address.slen, remote_address);
+    printf("Remote contact: %.*s\n", (int)remote_contact.slen, remote_contact);
     printf("Remote contact: %.*s\n", (int)remote_contact.slen, remote_contact);
     printf("Remote URI: %.*s\n", (int)remote_uri.slen, remote_uri);
     memset(current_uri, 0, sizeof(CURRENT_URI_SIZE));
@@ -480,6 +482,7 @@ static int pjsua_thread(void){
     tx_volume=100;
 
     if (status != PJ_SUCCESS) error_exit("Error adding sound device", status);
+
     /* Get the current input (microphone) volume */
   
     //register without sip server account
@@ -495,6 +498,9 @@ static int pjsua_thread(void){
     
     */ 
    char buffer[16];//max ip lenght ipv4
+
+   pjsua_acc_config network_account_config;
+   pjsua_acc_config_default(&network_account_config);
    strcpy(buffer,"e");
    IP_get_eth0_ip(buffer);
    if(buffer[0]=='e'){
@@ -503,12 +509,10 @@ static int pjsua_thread(void){
     PJ_LOG(3,(THIS_FILE,"ETH 0 ASSINGED IP ADDRESS: %s \n",buffer));
 
 
-    pjsua_acc_config network_account_config;
-    pjsua_acc_config_default(&network_account_config);
     char uri_buffer[1024];
-    sprintf(uri_buffer,"sip:%s@%s",SIP_USER_NETWORK,buffer);
-    //network_account_config.id = pj_str("sip:debian1@192.168.1.129");
-    network_account_config.id = pj_str(uri_buffer);
+    //sprintf(uri_buffer,"sip:%s@%s",SIP_USER_NETWORK,buffer);
+    network_account_config.id = pj_str("sip:san@192.168.1.129");
+    //network_account_config.id = pj_str(uri_buffer);
     status = pjsua_acc_add(&network_account_config, PJ_TRUE, &network_account_id);
     if (status != PJ_SUCCESS)  error_exit("Error second account", status);
 
@@ -573,24 +577,17 @@ static int pjsua_thread(void){
 
      pj_thread_join(thread);
 
-/*  threads 
+
+
 
 
     rc = pj_thread_create(pool, "network", (pj_thread_proc *)&udp_receive_thread,
-                          NULL,
-                          PJ_THREAD_DEFAULT_STACK_SIZE,
-                          0,
-                          &network);
 
-    if (rc != PJ_SUCCESS)
-    {
-        
-        error_exit("Error creating network thread", rc);
-    };
     
     
-   
+    
     rc = pj_thread_create(pool, "interface", (pj_thread_proc *)&IFace_runner,
+
                           NULL,
                           PJ_THREAD_DEFAULT_STACK_SIZE,
                           0,
@@ -601,9 +598,16 @@ static int pjsua_thread(void){
         
         error_exit("Error creating interface thread", rc);
     };
+
+
+    if (rc != PJ_SUCCESS)
+    {
+        
+        error_exit("Error creating network thread", rc);
+    };
   
    
-*/
+
     /* If URL is specified, make call to the URL. */
 
     /* Wait until user press "q" to quit. */
@@ -649,10 +653,10 @@ static int pjsua_thread(void){
      
         if (option[0]== 'x') {
             
-            // pj_str_t uri = pj_str("sip:ryan@192.168.1.207");
+            pj_str_t uri = pj_str("sip:ryan@192.168.1.207");
 
-            // status = pjsua_call_make_call(acc_id2, &uri, 0, NULL, NULL, NULL);
-            // if (status != PJ_SUCCESS) error_exit("Error making call", status);
+            //status = pjsua_call_make_call(network_id, &uri, 0, NULL, NULL, NULL);
+            if (status != PJ_SUCCESS) error_exit("Error making call", status);
 
             if(pjsua_interface_make_callO1("sip:ryan@192.168.1.207")){
 
@@ -688,16 +692,18 @@ static int pjsua_thread(void){
            
         }
             //make call
+
+        sleepMs(200);
     }
 
     /* Destroy pjsua */
 
    
     sendShutdownRequest();
-    //pj_thread_join(network); 
-    //IFace_endThread();
-    //pj_thread_join(interface); 
-    //IFace_cleanup();
+    pj_thread_join(network); 
+    IFace_endThread();
+    pj_thread_join(interface); 
+    IFace_cleanup();
     pjsua_destroy();
     return 0;
 }
@@ -713,7 +719,7 @@ int pjsua_interface_init(pthread_cond_t * cond, pthread_mutex_t * lock){
     status_call=0;
     current_uri=malloc(CURRENT_URI_SIZE*sizeof(char));
 
-    //IFace_initialize();
+    IFace_initialize();
     pthread_mutex_init(&call_mutex, NULL);
     pthread_mutex_init(&pickup_call_mutex, NULL);
     pthread_mutex_init(&status_call_mutex,NULL);
@@ -726,7 +732,7 @@ int pjsua_interface_init(pthread_cond_t * cond, pthread_mutex_t * lock){
         sendShutdownRequest();
         return -1;
     }
-    LED_startUp();
+   
     return 1;
 }
 
@@ -738,7 +744,6 @@ int pjsua_interface_cleanup(void){
     pthread_mutex_destroy(&status_call_mutex);
     pthread_mutex_destroy(&tx_volume_mutex);
     pthread_mutex_destroy(&current_uri_mutex);
-    LED_cleanUp();
     if(pthread_join(pjsuaThreadPID, NULL) != 0){
         perror("Error in joining the phsua thread.");
     }
