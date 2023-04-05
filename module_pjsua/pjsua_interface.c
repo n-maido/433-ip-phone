@@ -117,8 +117,9 @@ static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
     current_call=call_id;
     pthread_mutex_unlock(&call_mutex);
     pj_str_t remote_uri = ci.remote_info;
-    memset(current_uri, 0, sizeof(CURRENT_URI_SIZE));
+    
     pthread_mutex_lock(&current_uri_mutex);
+    memset(current_uri, 0, sizeof(CURRENT_URI_SIZE));
     sprintf(current_uri,"%s",remote_uri); 
     pthread_mutex_unlock(&current_uri_mutex);
     pjsua_call_get_info(call_id, &ci);
@@ -173,8 +174,9 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
     // printf("Remote address: %.*s\n", (int)remote_address.slen, remote_address);
     // printf("Remote contact: %.*s\n", (int)remote_contact.slen, remote_contact);
     //printf("Remote URI: %.*s\n", (int)remote_uri.slen, remote_uri);
-    memset(current_uri, 0, sizeof(CURRENT_URI_SIZE));
+    
     pthread_mutex_lock(&current_uri_mutex);
+    memset(current_uri, 0, sizeof(CURRENT_URI_SIZE));
     sprintf(current_uri,"%s",remote_uri); 
     pthread_mutex_unlock(&current_uri_mutex);
     /////////////
@@ -444,6 +446,33 @@ void pjsua_interface_get_uri(char *buffer){
     memset(buffer, 0, sizeof(CURRENT_URI_SIZE));
     pthread_mutex_lock(&current_uri_mutex);
     snprintf(buffer,CURRENT_URI_SIZE,"%s",current_uri);
+    pthread_mutex_unlock(&current_uri_mutex);
+
+
+
+}
+
+void pjsua_interface_get_uri_alt(char *buffer){
+
+    memset(buffer, 0, sizeof(CURRENT_URI_SIZE));
+    pthread_mutex_lock(&current_uri_mutex);
+    //snprintf(buffer,CURRENT_URI_SIZE,"%s",current_uri);
+    int j=0;
+    for(int i=0;i<CURRENT_URI_SIZE;i++){
+
+        if(current_uri[i] != '<' && current_uri[i] != '>'){
+
+            buffer[j]=current_uri[i];
+            j++;
+        }
+
+        if(current_uri[i] == '>'){
+
+            break;
+
+        }
+    }
+    buffer[j]='\0';
     pthread_mutex_unlock(&current_uri_mutex);
 
 
